@@ -1,0 +1,971 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="洗腎紀錄">
+<meta name="theme-color" content="#f4f6f8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111417" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icon-192.png">
+<title>洗腎紀錄</title>
+<style>
+:root {
+  --bg: #f4f6f8;
+  --card: #ffffff;
+  --text: #1b2228;
+  --muted: #66727d;
+  --line: #e3e7eb;
+  --accent: #0f7b8a;
+  --accent-soft: #e1f2f4;
+  --bp-sys: #d1435b;
+  --bp-dia: #3b6fd6;
+  --uf: #1d8fbf;
+  --wt: #d9822b;
+  --danger: #c8383d;
+  --delivery: #148f77;
+  --clinic: #5b57c9;
+  --rx: #c2477e;
+  --shadow: 0 1px 2px rgba(20, 30, 40, .06), 0 2px 8px rgba(20, 30, 40, .05);
+  --radius: 16px;
+  --tabbar: 64px;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111417;
+    --card: #1c2126;
+    --text: #e8ecef;
+    --muted: #96a2ad;
+    --line: #2c333a;
+    --accent: #3fb6c6;
+    --accent-soft: #17343a;
+    --bp-sys: #ef6a80;
+    --bp-dia: #6f9bf0;
+    --uf: #4ab4e0;
+    --wt: #f0a256;
+    --danger: #f06b6f;
+    --delivery: #3cc3a4;
+    --clinic: #918df0;
+    --rx: #ec7fae;
+    --shadow: none;
+  }
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--bg); color: var(--text); }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang TC", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+  font-size: 17px;
+  line-height: 1.45;
+  padding-bottom: calc(var(--tabbar) + env(safe-area-inset-bottom) + 16px);
+  -webkit-text-size-adjust: 100%;
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+
+header.top {
+  position: sticky; top: 0; z-index: 5;
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  padding: calc(env(safe-area-inset-top) + 10px) 16px 10px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+}
+header.top h1 { font-size: 28px; margin: 0; letter-spacing: .5px; }
+main { padding: 4px 16px 16px; max-width: 640px; margin: 0 auto; }
+.view { display: none; }
+.view.active { display: block; }
+
+.card {
+  background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 16px; margin-bottom: 14px;
+}
+.card h2 { font-size: 18px; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+.dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; flex: none; }
+.muted { color: var(--muted); }
+.small { font-size: 14px; }
+
+.btn {
+  border: 0; border-radius: 12px; padding: 12px 16px; background: var(--accent-soft); color: var(--accent);
+  font-weight: 600; min-height: 46px;
+}
+.btn.primary { background: var(--accent); color: #fff; }
+.btn.danger { background: transparent; color: var(--danger); }
+.btn.block { width: 100%; }
+.btn.ghost { background: transparent; }
+.btn.sm { min-height: 36px; padding: 6px 12px; font-size: 15px; border-radius: 10px; }
+.iconbtn {
+  border: 0; background: var(--accent); color: #fff; width: 44px; height: 44px; border-radius: 50%;
+  font-size: 26px; line-height: 1; display: grid; place-items: center;
+}
+
+/* 紀錄列表 */
+.month-label { font-size: 14px; font-weight: 700; color: var(--muted); margin: 18px 4px 8px; }
+.rec {
+  display: block; width: 100%; text-align: left; border: 0; background: var(--card);
+  border-radius: 14px; padding: 12px 14px; margin-bottom: 8px; box-shadow: var(--shadow);
+}
+.rec .d { font-weight: 700; font-size: 17px; }
+.rec .vals { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.rec .vals span { white-space: nowrap; }
+.rec .vals b { font-weight: 600; }
+.empty { text-align: center; padding: 48px 16px; color: var(--muted); }
+.empty .big { font-size: 44px; }
+
+.upcoming { border-left: 4px solid var(--accent); }
+.up-item { display: flex; align-items: center; gap: 10px; padding: 6px 0; }
+.up-item + .up-item { border-top: 1px solid var(--line); }
+.chip {
+  display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 14px; font-weight: 600;
+  background: var(--accent-soft); color: var(--accent); white-space: nowrap;
+}
+.chip.warn { background: color-mix(in srgb, var(--danger) 15%, transparent); color: var(--danger); }
+.chip.gray { background: color-mix(in srgb, var(--muted) 15%, transparent); color: var(--muted); }
+
+/* 分析 */
+.month-switch { display: flex; align-items: center; justify-content: space-between; margin: 4px 0 14px; }
+.month-switch .title { font-size: 20px; font-weight: 700; }
+.month-switch button { width: 46px; height: 46px; border-radius: 50%; border: 0; background: var(--card); box-shadow: var(--shadow); font-size: 20px; color: var(--accent); }
+.month-switch button:disabled { opacity: .35; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 8px; }
+.stat .k { font-size: 13px; color: var(--muted); }
+.stat .v { font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.stat .v.up { color: var(--danger); }
+.chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+.chart text { fill: var(--muted); font-size: 11px; font-family: inherit; }
+.chart .grid { stroke: var(--line); stroke-width: 1; }
+.chart circle { cursor: pointer; }
+.tip { min-height: 22px; font-size: 14px; color: var(--muted); text-align: center; font-variant-numeric: tabular-nums; }
+.legend { display: flex; gap: 16px; justify-content: center; font-size: 14px; color: var(--muted); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+
+/* 提醒 */
+.rem { display: flex; gap: 12px; padding: 12px 0; align-items: flex-start; }
+.rem + .rem { border-top: 1px solid var(--line); }
+.rem .main { flex: 1; min-width: 0; }
+.rem .when { font-weight: 700; }
+.rem .meta { font-size: 14px; color: var(--muted); margin-top: 2px; }
+.rem .note { font-size: 14px; color: var(--muted); overflow-wrap: anywhere; }
+.rem .actions { display: flex; flex-direction: column; gap: 6px; flex: none; }
+.add-link { border: 0; background: transparent; color: var(--accent); font-weight: 600; padding: 10px 0 2px; min-height: 44px; }
+
+/* 備份 */
+.row { display: flex; gap: 10px; }
+.row > * { flex: 1; }
+.list-btns { display: grid; gap: 10px; }
+.info { background: var(--accent-soft); border-radius: 12px; padding: 12px 14px; font-size: 15px; }
+.info ol { margin: 6px 0 0; padding-left: 22px; }
+
+/* 底部分頁 */
+nav.tabs {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+  height: calc(var(--tabbar) + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  border-top: 1px solid var(--line);
+  display: grid; grid-template-columns: repeat(4, 1fr);
+}
+nav.tabs button {
+  border: 0; background: transparent; color: var(--muted); display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 2px; font-size: 12px; font-weight: 600;
+}
+nav.tabs button svg { width: 26px; height: 26px; }
+nav.tabs button.active { color: var(--accent); }
+
+/* 編輯視窗 */
+.sheet-wrap {
+  position: fixed; inset: 0; z-index: 20; background: rgba(0, 0, 0, .35);
+  display: none; align-items: flex-end; justify-content: center;
+}
+.sheet-wrap.open { display: flex; }
+.sheet {
+  background: var(--bg); width: 100%; max-width: 640px; max-height: 94vh; max-height: 94dvh;
+  border-radius: 20px 20px 0 0; display: flex; flex-direction: column;
+  animation: up .22s ease-out;
+}
+@keyframes up { from { transform: translateY(40px); opacity: .4; } to { transform: none; opacity: 1; } }
+.sheet-head {
+  display: flex; align-items: center; justify-content: space-between; padding: 12px 8px;
+  border-bottom: 1px solid var(--line);
+}
+.sheet-head h3 { margin: 0; font-size: 17px; }
+.sheet-body { overflow-y: auto; padding: 14px 16px calc(24px + env(safe-area-inset-bottom)); -webkit-overflow-scrolling: touch; }
+.field { margin-bottom: 14px; }
+.field > label, .field > .label { display: block; font-size: 14px; font-weight: 600; color: var(--muted); margin: 0 4px 6px; }
+.group { background: var(--card); border-radius: 14px; overflow: hidden; box-shadow: var(--shadow); }
+.group .line { display: flex; align-items: center; gap: 10px; padding: 0 14px; min-height: 52px; }
+.group .line + .line { border-top: 1px solid var(--line); }
+.group .line > span:first-child { flex: 1; }
+.group input[type=text], .group input[type=date], .group input[type=datetime-local], .group select, .group textarea {
+  border: 0; background: transparent; padding: 12px 0; min-width: 0; outline: none; font-size: 17px;
+}
+.group input.num { width: 110px; text-align: right; font-variant-numeric: tabular-nums; }
+.group input[type=date], .group input[type=datetime-local] { text-align: right; }
+.group select { text-align: right; direction: rtl; }
+.group textarea { width: 100%; resize: vertical; min-height: 70px; }
+.bp { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 6px 14px; }
+.bp input { width: 40%; text-align: center; font-size: 26px !important; font-weight: 700; }
+.bp .slash { font-size: 26px; color: var(--muted); }
+.sign {
+  border: 1px solid var(--line); background: var(--bg); border-radius: 8px; width: 38px; height: 34px;
+  font-size: 16px; font-weight: 700; color: var(--muted); flex: none;
+}
+.total { font-weight: 700; color: var(--uf); font-variant-numeric: tabular-nums; }
+.hint { font-size: 13px; color: var(--muted); margin: 6px 4px 0; }
+.switch { position: relative; width: 52px; height: 32px; flex: none; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch .s { position: absolute; inset: 0; background: var(--line); border-radius: 999px; transition: .2s; }
+.switch .s::after { content: ""; position: absolute; top: 3px; left: 3px; width: 26px; height: 26px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.25); transition: .2s; }
+.switch input:checked + .s { background: var(--accent); }
+.switch input:checked + .s::after { transform: translateX(20px); }
+.seg { display: flex; gap: 6px; padding: 10px 14px; flex-wrap: wrap; }
+.seg button { flex: 1; border: 1px solid var(--line); background: transparent; border-radius: 10px; padding: 8px 4px; min-height: 40px; font-size: 15px; }
+.seg button.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+
+.toast {
+  position: fixed; left: 50%; bottom: calc(var(--tabbar) + env(safe-area-inset-bottom) + 16px);
+  transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 18px;
+  border-radius: 999px; font-size: 15px; z-index: 30; opacity: 0; transition: opacity .2s; pointer-events: none;
+  max-width: 90vw; text-align: center;
+}
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <h1 id="pageTitle">每日紀錄</h1>
+  <button class="iconbtn" id="addBtn" aria-label="新增紀錄">＋</button>
+</header>
+
+<main>
+  <!-- 紀錄 -->
+  <section class="view active" id="view-records">
+    <div id="upcoming"></div>
+    <div id="recordList"></div>
+  </section>
+
+  <!-- 分析 -->
+  <section class="view" id="view-analysis">
+    <div class="month-switch">
+      <button id="prevMonth" aria-label="上個月">‹</button>
+      <div class="title" id="monthTitle"></div>
+      <button id="nextMonth" aria-label="下個月">›</button>
+    </div>
+    <div id="analysis"></div>
+  </section>
+
+  <!-- 提醒 -->
+  <section class="view" id="view-reminders">
+    <div id="reminderList"></div>
+  </section>
+
+  <!-- 備份 -->
+  <section class="view" id="view-backup">
+    <div id="installTip"></div>
+    <div class="card">
+      <h2>資料備份</h2>
+      <p class="muted small" style="margin-top:0">紀錄只存在這支手機裡。建議每月備份一次，換手機或誤刪時可以還原。</p>
+      <p class="small" id="backupStatus"></p>
+      <div class="list-btns">
+        <button class="btn primary block" id="exportJson">匯出備份檔</button>
+        <button class="btn block" id="importJson">從備份檔還原</button>
+        <input type="file" id="importFile" accept=".json,application/json" hidden>
+      </div>
+    </div>
+    <div class="card">
+      <h2>給醫護人員</h2>
+      <p class="muted small" style="margin-top:0">匯出表格檔（CSV），可用 Excel 或 Numbers 開啟。</p>
+      <button class="btn block" id="exportCsv">匯出紀錄表格</button>
+    </div>
+    <div class="card">
+      <h2>其他</h2>
+      <p class="small muted" id="storageInfo" style="margin-top:0"></p>
+      <button class="btn danger block" id="clearAll">清除所有資料</button>
+    </div>
+    <p class="muted small" style="text-align:center">本 App 僅供個人紀錄，數值判讀請依醫師與護理師指示。</p>
+  </section>
+</main>
+
+<nav class="tabs">
+  <button data-tab="records" class="active">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6M9 18h3"/></svg>
+    紀錄
+  </button>
+  <button data-tab="analysis">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V4M4 20h16"/><path d="M7 15l4-5 3 3 5-7"/></svg>
+    分析
+  </button>
+  <button data-tab="reminders">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4z"/><path d="M10 21h4"/></svg>
+    提醒
+  </button>
+  <button data-tab="backup">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 19h14"/></svg>
+    備份
+  </button>
+</nav>
+
+<div class="sheet-wrap" id="sheet">
+  <div class="sheet" role="dialog" aria-modal="true">
+    <div class="sheet-head">
+      <button class="btn ghost sm" id="sheetCancel">取消</button>
+      <h3 id="sheetTitle"></h3>
+      <button class="btn primary sm" id="sheetSave">儲存</button>
+    </div>
+    <div class="sheet-body" id="sheetBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+
+/* ============ 資料 ============ */
+const KEY = 'dialysis-tracker-v1';
+const KINDS = {
+  delivery: { name: '送藥水', icon: '📦', color: 'var(--delivery)', lead: 1, repeat: 0,
+              action: '藥水送達，請留意收貨', when: '送達時間', ph: '例如：廠商電話、箱數' },
+  clinic:   { name: '回診', icon: '🩺', color: 'var(--clinic)', lead: 1, repeat: 0,
+              action: '回診，記得帶紀錄與健保卡', when: '回診時間', ph: '例如：醫院、科別、診號、要抽血' },
+  rx:       { name: '慢性處方箋', icon: '💊', color: 'var(--rx)', lead: 3, repeat: 28,
+              action: '可領取慢性處方箋藥物', when: '可領藥日', ph: '例如：領藥地點、第幾次領' }
+};
+
+let db = load();
+
+function load() {
+  try {
+    const d = JSON.parse(localStorage.getItem(KEY));
+    if (d && Array.isArray(d.records) && Array.isArray(d.reminders)) return d;
+  } catch (e) {}
+  return { records: [], reminders: [], lastBackup: null };
+}
+function save() {
+  try { localStorage.setItem(KEY, JSON.stringify(db)); }
+  catch (e) { toast('儲存失敗，手機空間可能不足'); }
+}
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+
+/* ============ 工具 ============ */
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const pad = n => String(n).padStart(2, '0');
+const WD = ['日', '一', '二', '三', '四', '五', '六'];
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const today = () => ymd(new Date());
+const parseYmd = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const fmtDay = s => { const d = parseYmd(s); return `${d.getMonth() + 1}月${d.getDate()}日（${WD[d.getDay()]}）`; };
+const fmtDT = d => `${d.getMonth() + 1}/${d.getDate()}（${WD[d.getDay()]}）${pad(d.getHours())}:${pad(d.getMinutes())}`;
+const num = s => {
+  if (s === null || s === undefined) return null;
+  const t = String(s).trim().replace(/，|,/g, '.').replace(/[－—–]/g, '-');
+  if (t === '' || t === '-') return null;
+  const n = Number(t);
+  return Number.isFinite(n) ? n : null;
+};
+const fmt = (n, digits = 1) => n === null || n === undefined ? '—' :
+  (Math.round(n * 10 ** digits) / 10 ** digits).toLocaleString('en-US', { maximumFractionDigits: digits, useGrouping: false });
+const signed = (n, digits = 1) => {
+  if (n === null) return '—';
+  const r = Math.round(n * 10 ** digits) / 10 ** digits;
+  return r === 0 ? '±0' : (r > 0 ? '+' : '') + fmt(r, digits);
+};
+const avg = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+const bagSum = r => { const v = r.bags.filter(x => x !== null); return v.length ? v.reduce((a, b) => a + b, 0) : null; };
+const totalUF = r => r.total !== null && r.total !== undefined ? r.total : bagSum(r);
+
+let toastTimer;
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+/* ============ 分頁 ============ */
+const TITLES = { records: '每日紀錄', analysis: '每月分析', reminders: '提醒', backup: '備份與設定' };
+let currentTab = 'records';
+function showTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + tab));
+  $('#pageTitle').textContent = TITLES[tab];
+  $('#addBtn').style.visibility = (tab === 'records' || tab === 'reminders') ? 'visible' : 'hidden';
+  $('#addBtn').setAttribute('aria-label', tab === 'reminders' ? '新增提醒' : '新增紀錄');
+  render();
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
+$('#addBtn').addEventListener('click', () => {
+  if (currentTab === 'reminders') return openReminder(null, 'clinic');
+  const t = db.records.find(r => r.date === today());
+  openRecord(t || null);
+});
+
+function render() {
+  if (currentTab === 'records') renderRecords();
+  if (currentTab === 'analysis') renderAnalysis();
+  if (currentTab === 'reminders') renderReminders();
+  if (currentTab === 'backup') renderBackup();
+}
+
+/* ============ 紀錄頁 ============ */
+function renderRecords() {
+  renderUpcoming();
+  const list = $('#recordList');
+  const recs = [...db.records].sort((a, b) => b.date.localeCompare(a.date));
+  if (!recs.length) {
+    list.innerHTML = `<div class="empty"><div class="big">📋</div><p>還沒有紀錄<br>點右上角 ＋ 新增今天的紀錄</p></div>`;
+    return;
+  }
+  let html = '', lastMonth = '';
+  for (const r of recs) {
+    const m = r.date.slice(0, 7);
+    if (m !== lastMonth) {
+      lastMonth = m;
+      html += `<div class="month-label">${Number(m.slice(0, 4))}年${Number(m.slice(5))}月</div>`;
+    }
+    const bp = r.sys !== null && r.dia !== null ? `${r.sys}/${r.dia}` : (r.sys ?? r.dia ?? '—');
+    const uf = totalUF(r);
+    html += `<button class="rec" data-id="${r.id}">
+      <div class="d">${fmtDay(r.date)}${r.date === today() ? ' <span class="chip">今天</span>' : ''}</div>
+      <div class="vals">
+        <span><span class="dot" style="background:var(--bp-sys)"></span> 血壓 <b>${bp}</b></span>
+        <span><span class="dot" style="background:var(--wt)"></span> 體重 <b>${r.weight !== null ? fmt(r.weight) + ' kg' : '—'}</b></span>
+        <span><span class="dot" style="background:var(--uf)"></span> 脫水 <b>${uf !== null ? fmt(uf, 0) + ' mL' : '—'}</b></span>
+      </div>
+      ${r.note ? `<div class="muted small" style="margin-top:4px">${esc(r.note)}</div>` : ''}
+    </button>`;
+  }
+  list.innerHTML = html;
+  list.querySelectorAll('.rec').forEach(b => b.addEventListener('click', () => openRecord(db.records.find(r => r.id === b.dataset.id))));
+}
+
+function renderUpcoming() {
+  const now = new Date();
+  const soon = db.reminders
+    .map(r => ({ r, next: nextOccurrence(r), days: daysUntil(nextOccurrence(r)) }))
+    .filter(x => x.next >= now && x.days <= 3)
+    .sort((a, b) => a.next - b.next);
+  const box = $('#upcoming');
+  const needBackup = db.records.length >= 7 &&
+    (!db.lastBackup || (now - new Date(db.lastBackup)) / 864e5 > 30);
+  let html = '';
+  if (soon.length) {
+    html += `<div class="card upcoming"><h2>近期提醒</h2>` + soon.map(x => {
+      const k = KINDS[x.r.kind];
+      return `<div class="up-item"><span>${k.icon}</span><div style="flex:1"><b>${k.name}</b> <span class="muted small">${fmtDT(x.next)}</span></div>${countdownChip(x.days)}</div>`;
+    }).join('') + `</div>`;
+  }
+  if (needBackup) {
+    html += `<div class="card" style="display:flex;align-items:center;gap:12px"><div style="flex:1" class="small">已超過一個月沒有備份資料</div><button class="btn sm" id="goBackup">去備份</button></div>`;
+  }
+  box.innerHTML = html;
+  const gb = $('#goBackup'); if (gb) gb.addEventListener('click', () => showTab('backup'));
+}
+
+/* ============ 編輯視窗 ============ */
+let sheetSave = null;
+function openSheet(title, bodyHtml, onSave, saveText = '儲存') {
+  $('#sheetTitle').textContent = title;
+  $('#sheetBody').innerHTML = bodyHtml;
+  $('#sheetSave').textContent = saveText;
+  $('#sheetSave').style.visibility = onSave ? 'visible' : 'hidden';
+  sheetSave = onSave;
+  $('#sheet').classList.add('open');
+  $('#sheetBody').scrollTop = 0;
+  document.body.style.overflow = 'hidden';
+}
+function closeSheet() {
+  $('#sheet').classList.remove('open');
+  document.body.style.overflow = '';
+  sheetSave = null;
+}
+$('#sheetCancel').addEventListener('click', closeSheet);
+$('#sheetSave').addEventListener('click', () => { if (sheetSave && sheetSave() !== false) { closeSheet(); render(); } });
+$('#sheet').addEventListener('click', e => { if (e.target.id === 'sheet') closeSheet(); });
+
+const BAG_NAMES = ['第一包脫水', '第二包脫水', '第三包脫水', '第四包脫水'];
+const v = x => x === null || x === undefined ? '' : String(x);
+
+function openRecord(rec) {
+  const r = rec || { id: null, date: today(), sys: null, dia: null, weight: null, bags: [null, null, null, null], total: null, note: '' };
+  const manual = r.total !== null && r.total !== undefined;
+  const body = `
+    <div class="field"><div class="group"><div class="line"><span>日期</span><input type="date" id="f-date" value="${r.date}" max="${today()}"></div></div></div>
+
+    <div class="field"><span class="label">血壓（mmHg）</span>
+      <div class="group"><div class="bp">
+        <input type="text" inputmode="numeric" id="f-sys" placeholder="收縮壓" value="${v(r.sys)}" maxlength="3">
+        <span class="slash">/</span>
+        <input type="text" inputmode="numeric" id="f-dia" placeholder="舒張壓" value="${v(r.dia)}" maxlength="3">
+      </div></div>
+    </div>
+
+    <div class="field"><div class="group"><div class="line"><span>體重（kg）</span><input class="num" type="text" inputmode="decimal" id="f-weight" placeholder="例如 58.4" value="${v(r.weight)}"></div></div></div>
+
+    <div class="field"><span class="label">脫水量（mL）</span>
+      <div class="group">
+        ${BAG_NAMES.map((n, i) => `<div class="line"><span>${n}</span>
+          <button type="button" class="sign" data-i="${i}" aria-label="正負切換">±</button>
+          <input class="num bag" type="text" inputmode="decimal" id="f-bag${i}" placeholder="mL" value="${v(r.bags[i])}"></div>`).join('')}
+        <div class="line"><span>手動輸入全天脫水量</span><label class="switch"><input type="checkbox" id="f-manual" ${manual ? 'checked' : ''}><span class="s"></span></label></div>
+        <div class="line" id="autoLine"><span>全天脫水量</span><span class="total" id="f-auto">—</span></div>
+        <div class="line" id="manualLine"><span>全天脫水量</span>
+          <button type="button" class="sign" data-i="t" aria-label="正負切換">±</button>
+          <input class="num" type="text" inputmode="decimal" id="f-total" placeholder="mL" value="${manual ? v(r.total) : ''}"></div>
+      </div>
+      <p class="hint">全天脫水量預設為四包加總。引流少於灌入時，按 ± 改成負數。</p>
+    </div>
+
+    <div class="field"><span class="label">備註</span>
+      <div class="group" style="padding:0 14px"><textarea id="f-note" placeholder="身體狀況、引流液外觀、水腫等">${esc(r.note)}</textarea></div>
+    </div>
+
+    ${rec ? `<button class="btn danger block" id="f-del">刪除這筆紀錄</button>` : ''}
+  `;
+  openSheet(rec ? '編輯紀錄' : '新增紀錄', body, () => {
+    const date = $('#f-date').value || today();
+    const out = {
+      id: r.id || uid(),
+      date,
+      sys: num($('#f-sys').value), dia: num($('#f-dia').value),
+      weight: num($('#f-weight').value),
+      bags: [0, 1, 2, 3].map(i => num($(`#f-bag${i}`).value)),
+      total: $('#f-manual').checked ? num($('#f-total').value) : null,
+      note: $('#f-note').value.trim()
+    };
+    if (out.sys !== null) out.sys = Math.round(out.sys);
+    if (out.dia !== null) out.dia = Math.round(out.dia);
+    const empty = out.sys === null && out.dia === null && out.weight === null &&
+      out.bags.every(x => x === null) && out.total === null && !out.note;
+    if (empty) { toast('請至少填一個項目'); return false; }
+    const dup = db.records.find(x => x.date === date && x.id !== out.id);
+    if (dup) {
+      if (!confirm(`${fmtDay(date)} 已經有一筆紀錄，要用這次的內容取代嗎？`)) return false;
+      db.records = db.records.filter(x => x !== dup);
+    }
+    const i = db.records.findIndex(x => x.id === out.id);
+    if (i >= 0) db.records[i] = out; else db.records.push(out);
+    save(); toast('已儲存');
+  });
+
+  const update = () => {
+    const sum = [0, 1, 2, 3].map(i => num($(`#f-bag${i}`).value)).filter(x => x !== null);
+    $('#f-auto').textContent = sum.length ? fmt(sum.reduce((a, b) => a + b, 0), 0) + ' mL' : '—';
+    const m = $('#f-manual').checked;
+    $('#autoLine').style.display = m ? 'none' : '';
+    $('#manualLine').style.display = m ? '' : 'none';
+  };
+  $('#sheetBody').querySelectorAll('input').forEach(i => i.addEventListener('input', update));
+  $('#f-manual').addEventListener('change', update);
+  $('#sheetBody').querySelectorAll('.sign').forEach(b => b.addEventListener('click', () => {
+    const inp = b.dataset.i === 't' ? $('#f-total') : $(`#f-bag${b.dataset.i}`);
+    const t = inp.value.trim();
+    inp.value = t.startsWith('-') ? t.slice(1) : '-' + t;
+    inp.focus(); update();
+  }));
+  const del = $('#f-del');
+  if (del) del.addEventListener('click', () => {
+    if (!confirm('確定刪除這筆紀錄？')) return;
+    db.records = db.records.filter(x => x.id !== r.id);
+    save(); closeSheet(); render(); toast('已刪除');
+  });
+  update();
+}
+
+/* ============ 分析頁 ============ */
+let viewMonth = (() => { const d = new Date(); return { y: d.getFullYear(), m: d.getMonth() }; })();
+$('#prevMonth').addEventListener('click', () => shiftMonth(-1));
+$('#nextMonth').addEventListener('click', () => shiftMonth(1));
+function shiftMonth(n) {
+  const d = new Date(viewMonth.y, viewMonth.m + n, 1);
+  viewMonth = { y: d.getFullYear(), m: d.getMonth() };
+  renderAnalysis();
+}
+const monthKey = (y, m) => `${y}-${pad(m + 1)}`;
+
+function renderAnalysis() {
+  const { y, m } = viewMonth;
+  const now = new Date();
+  $('#monthTitle').textContent = `${y}年${m + 1}月`;
+  $('#nextMonth').disabled = y > now.getFullYear() || (y === now.getFullYear() && m >= now.getMonth());
+  const key = monthKey(y, m);
+  const pd = new Date(y, m - 1, 1);
+  const pkey = monthKey(pd.getFullYear(), pd.getMonth());
+  const cur = db.records.filter(r => r.date.startsWith(key)).sort((a, b) => a.date.localeCompare(b.date));
+  const prev = db.records.filter(r => r.date.startsWith(pkey));
+  const days = new Date(y, m + 1, 0).getDate();
+  const day = r => Number(r.date.slice(8));
+  const pts = (arr, f) => arr.map(r => ({ d: day(r), v: f(r) })).filter(p => p.v !== null && p.v !== undefined);
+
+  const sys = pts(cur, r => r.sys), dia = pts(cur, r => r.dia);
+  const uf = pts(cur, totalUF), wt = pts(cur, r => r.weight);
+  const vals = a => a.map(p => p.v);
+  const pAvg = f => avg(prev.map(f).filter(x => x !== null && x !== undefined));
+
+  let html = '';
+
+  // 血壓
+  {
+    const aS = avg(vals(sys)), aD = avg(vals(dia));
+    const pS = pAvg(r => r.sys), pD = pAvg(r => r.dia);
+    const pair = (a, b) => a === null && b === null ? '—' : `${a === null ? '—' : Math.round(a)}/${b === null ? '—' : Math.round(b)}`;
+    const diff = aS !== null && aD !== null && pS !== null && pD !== null ? `${signed(aS - pS, 0)}/${signed(aD - pD, 0)}` : '—';
+    html += `<div class="card"><h2><span class="dot" style="background:var(--bp-sys)"></span>血壓（mmHg）</h2>`;
+    if (!sys.length && !dia.length) html += empty();
+    else {
+      html += stats([
+        ['平均', pair(aS, aD)],
+        ['最高', pair(max(vals(sys)), max(vals(dia)))],
+        ['最低', pair(min(vals(sys)), min(vals(dia)))],
+        ['較上月', diff]
+      ]);
+      html += `<div class="chart">${chart({ days, m, unit: 'mmHg', digits: 0,
+        series: [{ name: '收縮壓', color: 'var(--bp-sys)', pts: sys }, { name: '舒張壓', color: 'var(--bp-dia)', pts: dia }],
+        avgs: [{ v: aS, color: 'var(--bp-sys)' }, { v: aD, color: 'var(--bp-dia)' }] })}</div>
+        <div class="legend"><span><span class="dot" style="background:var(--bp-sys)"></span>收縮壓</span><span><span class="dot" style="background:var(--bp-dia)"></span>舒張壓</span><span class="muted">虛線＝平均</span></div>
+        <div class="tip"></div>`;
+    }
+    html += `</div>`;
+  }
+  html += metricCard('全天脫水量', 'mL', 'var(--uf)', 0, uf, pAvg(totalUF), days, m);
+  html += metricCard('體重', 'kg', 'var(--wt)', 1, wt, pAvg(r => r.weight), days, m);
+  html += `<p class="muted small" style="text-align:center">本月共 ${cur.length} 天有紀錄・點圖上的點可看數值</p>`;
+
+  const box = $('#analysis');
+  box.innerHTML = html;
+  box.querySelectorAll('.card').forEach(card => {
+    const tip = $('.tip', card);
+    card.querySelectorAll('circle[data-tip]').forEach(c => c.addEventListener('click', () => {
+      card.querySelectorAll('circle[data-tip]').forEach(o => o.setAttribute('r', 3.5));
+      c.setAttribute('r', 6);
+      if (tip) tip.textContent = c.dataset.tip;
+    }));
+  });
+}
+const max = a => a.length ? Math.max(...a) : null;
+const min = a => a.length ? Math.min(...a) : null;
+const empty = () => `<p class="muted" style="text-align:center;padding:28px 0;margin:0">本月尚無資料</p>`;
+function stats(items) {
+  return `<div class="stats">${items.map(([k, val]) =>
+    `<div class="stat"><div class="k">${k}</div><div class="v">${val}</div></div>`).join('')}</div>`;
+}
+function metricCard(title, unit, color, digits, pts, prevAvg, days, m) {
+  let html = `<div class="card"><h2><span class="dot" style="background:${color}"></span>${title}（${unit}）</h2>`;
+  if (!pts.length) return html + empty() + `</div>`;
+  const vals = pts.map(p => p.v);
+  const a = avg(vals);
+  html += stats([
+    ['平均', fmt(a, digits)],
+    ['最高', fmt(max(vals), digits)],
+    ['最低', fmt(min(vals), digits)],
+    ['較上月', a !== null && prevAvg !== null ? signed(a - prevAvg, digits) : '—']
+  ]);
+  html += `<div class="chart">${chart({ days, m, unit, digits, series: [{ name: title, color, pts }], avgs: [{ v: a, color, label: true }] })}</div><div class="tip"></div></div>`;
+  return html;
+}
+
+function niceStep(raw) {
+  const p = 10 ** Math.floor(Math.log10(raw));
+  const f = raw / p;
+  return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 2.5 ? 2.5 : f <= 5 ? 5 : 10) * p;
+}
+function chart({ days, m, unit, digits, series, avgs }) {
+  const W = 340, H = 200, L = 40, R = 12, T = 16, B = 26;
+  const all = series.flatMap(s => s.pts.map(p => p.v)).concat(avgs.map(a => a.v).filter(x => x !== null));
+  let lo = Math.min(...all), hi = Math.max(...all);
+  if (lo === hi) { lo -= 1; hi += 1; }
+  const step = niceStep((hi - lo) / 4);
+  lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
+  if (hi === lo) hi = lo + step;
+  const x = d => L + (d - 1) / (days - 1) * (W - L - R);
+  const y = val => T + (hi - val) / (hi - lo) * (H - T - B);
+  let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="折線圖">`;
+  const sd = step < 1 ? 1 : 0;
+  for (let g = lo; g <= hi + step / 2; g += step) {
+    s += `<line class="grid" x1="${L}" x2="${W - R}" y1="${y(g)}" y2="${y(g)}"/>`;
+    s += `<text x="${L - 6}" y="${y(g) + 4}" text-anchor="end">${fmt(g, sd)}</text>`;
+  }
+  for (const d of [1, 8, 15, 22, 29]) {
+    if (d > days) continue;
+    s += `<text x="${x(d)}" y="${H - 6}" text-anchor="middle">${m + 1}/${d}</text>`;
+  }
+  for (const a of avgs) {
+    if (a.v === null) continue;
+    s += `<line x1="${L}" x2="${W - R}" y1="${y(a.v)}" y2="${y(a.v)}" stroke="${a.color}" stroke-width="1.5" stroke-dasharray="5 4" opacity=".75"/>`;
+    if (a.label) s += `<text x="${W - R}" y="${y(a.v) - 5}" text-anchor="end" style="fill:${a.color};font-weight:600">平均 ${fmt(a.v, digits)}</text>`;
+  }
+  for (const se of series) {
+    const p = [...se.pts].sort((a, b) => a.d - b.d);
+    if (p.length > 1) s += `<polyline fill="none" stroke="${se.color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" points="${p.map(q => `${x(q.d).toFixed(1)},${y(q.v).toFixed(1)}`).join(' ')}"/>`;
+    for (const q of p) {
+      s += `<circle cx="${x(q.d).toFixed(1)}" cy="${y(q.v).toFixed(1)}" r="3.5" fill="${se.color}" stroke="var(--card)" stroke-width="1.5" data-tip="${m + 1}/${q.d} ${se.name} ${fmt(q.v, digits)} ${unit}"/>`;
+      // 加大點擊範圍
+      s += `<circle cx="${x(q.d).toFixed(1)}" cy="${y(q.v).toFixed(1)}" r="12" fill="transparent" data-tip="${m + 1}/${q.d} ${se.name} ${fmt(q.v, digits)} ${unit}"/>`;
+    }
+  }
+  return s + `</svg>`;
+}
+
+/* ============ 提醒頁 ============ */
+function nextOccurrence(r) {
+  let d = new Date(r.datetime);
+  if (r.repeat > 0) {
+    const now = new Date();
+    while (d < now) d = new Date(d.getFullYear(), d.getMonth(), d.getDate() + r.repeat, d.getHours(), d.getMinutes());
+  }
+  return d;
+}
+function daysUntil(d) {
+  const a = new Date(); a.setHours(0, 0, 0, 0);
+  const b = new Date(d); b.setHours(0, 0, 0, 0);
+  return Math.round((b - a) / 864e5);
+}
+function countdownChip(days) {
+  if (days < 0) return `<span class="chip gray">已過期</span>`;
+  if (days === 0) return `<span class="chip warn">今天</span>`;
+  if (days === 1) return `<span class="chip warn">明天</span>`;
+  return `<span class="chip">還有 ${days} 天</span>`;
+}
+
+function renderReminders() {
+  let html = `<div class="info" style="margin-bottom:14px">網頁 App 無法自己跳通知，請在設定提醒後按「加入行事曆」，由 iPhone 行事曆準時通知你。</div>`;
+  for (const [kind, k] of Object.entries(KINDS)) {
+    const items = db.reminders.filter(r => r.kind === kind).sort((a, b) => nextOccurrence(a) - nextOccurrence(b));
+    html += `<div class="card"><h2><span>${k.icon}</span><span style="color:${k.color}">${k.name}</span></h2>`;
+    for (const r of items) {
+      const n = nextOccurrence(r);
+      const meta = [r.repeat > 0 ? `每 ${r.repeat} 天` : '', r.lead > 0 ? `提前 ${r.lead} 天提醒` : '當天提醒'].filter(Boolean).join('・');
+      html += `<div class="rem">
+        <div class="main">
+          <div class="when">${fmtDT(n)} ${countdownChip(daysUntil(n))}</div>
+          <div class="meta">${meta}${r.calAdded ? '・已加入行事曆' : ''}</div>
+          ${r.note ? `<div class="note">${esc(r.note)}</div>` : ''}
+        </div>
+        <div class="actions">
+          <button class="btn sm" data-cal="${r.id}">加入行事曆</button>
+          <button class="btn sm ghost" data-edit="${r.id}">編輯</button>
+        </div>
+      </div>`;
+    }
+    html += `<button class="add-link" data-add="${kind}">＋ 新增${k.name}提醒</button></div>`;
+  }
+  if (db.reminders.length > 1) html += `<button class="btn block" id="calAll">全部加入行事曆</button>`;
+  const box = $('#reminderList');
+  box.innerHTML = html;
+  box.querySelectorAll('[data-add]').forEach(b => b.addEventListener('click', () => openReminder(null, b.dataset.add)));
+  box.querySelectorAll('[data-edit]').forEach(b => b.addEventListener('click', () => openReminder(db.reminders.find(r => r.id === b.dataset.edit))));
+  box.querySelectorAll('[data-cal]').forEach(b => b.addEventListener('click', () => addToCalendar([db.reminders.find(r => r.id === b.dataset.cal)])));
+  const all = $('#calAll'); if (all) all.addEventListener('click', () => addToCalendar(db.reminders));
+}
+
+function localDT(d) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+
+function openReminder(rem, kindDefault) {
+  const tmr = new Date(); tmr.setDate(tmr.getDate() + 1); tmr.setHours(9, 0, 0, 0);
+  const r = rem || { id: null, kind: kindDefault, datetime: localDT(tmr), lead: KINDS[kindDefault].lead, repeat: KINDS[kindDefault].repeat, note: '' };
+  let kind = r.kind, repeat = r.repeat;
+  const leadOpts = [0, 1, 2, 3, 5, 7];
+  const repOpts = [0, 7, 14, 28, 30];
+
+  const body = `
+    <div class="field"><span class="label">類型</span>
+      <div class="group"><div class="seg" id="kindSeg">${Object.entries(KINDS).map(([kk, k]) =>
+        `<button type="button" data-k="${kk}" class="${kk === kind ? 'on' : ''}">${k.icon} ${k.name}</button>`).join('')}</div></div>
+    </div>
+    <div class="field"><div class="group">
+      <div class="line"><span id="whenLabel">${KINDS[kind].when}</span><input type="datetime-local" id="r-dt" value="${r.datetime}"></div>
+      <div class="line"><span>提前提醒</span><select id="r-lead">${leadOpts.map(n =>
+        `<option value="${n}" ${n === r.lead ? 'selected' : ''}>${n === 0 ? '只在當天' : `提前 ${n} 天`}</option>`).join('')}</select></div>
+    </div>
+    <p class="hint">提前提醒與當天提醒都會在上面設定的時間通知。</p></div>
+    <div class="field"><span class="label">重複</span>
+      <div class="group"><div class="seg" id="repSeg">${repOpts.map(n =>
+        `<button type="button" data-n="${n}">${n === 0 ? '不重複' : `每${n}天`}</button>`).join('')}</div>
+        <div class="line"><span>自訂天數</span><input class="num" type="text" inputmode="numeric" id="r-rep" placeholder="天" value="${repeat || ''}"></div>
+      </div>
+      <p class="hint" id="rxHint">慢性處方箋通常每次領 28 天份，可依藥局實際可領藥日調整。</p>
+    </div>
+    <div class="field"><span class="label">備註</span>
+      <div class="group" style="padding:0 14px"><textarea id="r-note" placeholder="${KINDS[kind].ph}">${esc(r.note)}</textarea></div>
+    </div>
+    ${rem ? `<button class="btn danger block" id="r-del">刪除此提醒</button>` : ''}
+  `;
+  openSheet(rem ? '編輯提醒' : '新增提醒', body, () => {
+    const dt = $('#r-dt').value;
+    if (!dt) { toast('請選擇日期與時間'); return false; }
+    const rep = Math.max(0, Math.round(num($('#r-rep').value) || 0));
+    const out = { id: r.id || uid(), kind, datetime: dt, lead: Number($('#r-lead').value), repeat: rep, note: $('#r-note').value.trim(), calAdded: false };
+    const i = db.reminders.findIndex(x => x.id === out.id);
+    if (i >= 0) db.reminders[i] = out; else db.reminders.push(out);
+    save();
+    setTimeout(() => {
+      if (confirm(`已儲存。要現在加入 iPhone 行事曆，讓它準時通知你嗎？${rem && r.calAdded ? '\n\n（行事曆裡舊的這筆請記得手動刪除）' : ''}`)) addToCalendar([out]);
+    }, 250);
+  });
+
+  const syncRep = () => {
+    $('#repSeg').querySelectorAll('button').forEach(b => b.classList.toggle('on', Number(b.dataset.n) === repeat));
+    $('#rxHint').style.display = kind === 'rx' ? '' : 'none';
+  };
+  $('#kindSeg').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    kind = b.dataset.k;
+    $('#kindSeg').querySelectorAll('button').forEach(o => o.classList.toggle('on', o === b));
+    $('#whenLabel').textContent = KINDS[kind].when;
+    $('#r-note').placeholder = KINDS[kind].ph;
+    $('#r-lead').value = KINDS[kind].lead;
+    repeat = KINDS[kind].repeat; $('#r-rep').value = repeat || '';
+    syncRep();
+  }));
+  $('#repSeg').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    repeat = Number(b.dataset.n); $('#r-rep').value = repeat || ''; syncRep();
+  }));
+  $('#r-rep').addEventListener('input', () => { repeat = Math.round(num($('#r-rep').value) || 0); syncRep(); });
+  const del = $('#r-del');
+  if (del) del.addEventListener('click', () => {
+    if (!confirm('確定刪除此提醒？' + (r.calAdded ? '\n行事曆裡的這筆請另外手動刪除。' : ''))) return;
+    db.reminders = db.reminders.filter(x => x.id !== r.id);
+    save(); closeSheet(); render(); toast('已刪除');
+  });
+  syncRep();
+}
+
+/* ============ 行事曆（.ics） ============ */
+function icsEsc(s) { return String(s).replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\r?\n/g, '\\n'); }
+function icsUtc(d) { return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, ''); }
+function fold(line) {
+  // 每行最多 75 bytes（UTF-8）
+  const enc = new TextEncoder();
+  let out = '', cur = '', bytes = 0;
+  for (const ch of line) {
+    const b = enc.encode(ch).length;
+    if (bytes + b > 73) { out += cur + '\r\n '; cur = ''; bytes = 1; }
+    cur += ch; bytes += b;
+  }
+  return out + cur;
+}
+function buildIcs(rems) {
+  const L = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//Dialysis Tracker//ZH-TW', 'CALSCALE:GREGORIAN', 'METHOD:PUBLISH'];
+  const stamp = icsUtc(new Date());
+  for (const r of rems) {
+    const k = KINDS[r.kind];
+    const start = new Date(r.datetime);
+    const end = new Date(start.getTime() + 30 * 60000);
+    L.push('BEGIN:VEVENT', `UID:${r.id}@dialysis-tracker`, `DTSTAMP:${stamp}`,
+      `DTSTART:${icsUtc(start)}`, `DTEND:${icsUtc(end)}`,
+      `SUMMARY:${icsEsc(k.icon + ' ' + k.name)}`,
+      `DESCRIPTION:${icsEsc(k.action + (r.note ? '\n' + r.note : ''))}`);
+    if (r.repeat > 0) L.push(`RRULE:FREQ=DAILY;INTERVAL=${r.repeat}`);
+    if (r.lead > 0) L.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${icsEsc(`${r.lead} 天後${k.name}`)}`, `TRIGGER:-P${r.lead}D`, 'END:VALARM');
+    L.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${icsEsc(k.name)}`, 'TRIGGER:PT0M', 'END:VALARM');
+    L.push('END:VEVENT');
+  }
+  L.push('END:VCALENDAR');
+  return L.map(fold).join('\r\n') + '\r\n';
+}
+function addToCalendar(rems) {
+  rems = rems.filter(Boolean);
+  if (!rems.length) return;
+  const ics = buildIcs(rems);
+  const name = rems.length === 1 ? `${KINDS[rems[0].kind].name}提醒.ics` : '洗腎提醒.ics';
+  openSheet('加入行事曆', `
+    <div class="info">按下面的按鈕後，iPhone 會顯示行事曆畫面，請按「<b>加入</b>」或「<b>全部加入</b>」。</div>
+    <div class="list-btns" style="margin-top:14px">
+      <button class="btn primary block" id="cal-open">開啟 iPhone 行事曆</button>
+      <button class="btn block" id="cal-share">用分享方式開啟</button>
+    </div>
+    <p class="hint" style="margin-top:12px">如果第一個按鈕沒有反應，請改用第二個，在分享選單中選「行事曆」或先「儲存到檔案」，再從「檔案」App 點開。</p>
+  `, null);
+  const markAdded = () => { rems.forEach(r => r.calAdded = true); save(); };
+  $('#cal-open').addEventListener('click', () => {
+    markAdded();
+    const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    setTimeout(() => { closeSheet(); render(); }, 600);
+  });
+  $('#cal-share').addEventListener('click', async () => {
+    markAdded();
+    await shareFile(ics, name, 'text/calendar');
+    closeSheet(); render();
+  });
+}
+
+/* ============ 備份頁 ============ */
+async function shareFile(text, filename, type) {
+  const file = new File([text], filename, { type });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], title: filename }); return true; }
+    catch (e) { if (e.name === 'AbortError') return false; }
+  }
+  const url = URL.createObjectURL(file);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+  return true;
+}
+const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+
+function renderBackup() {
+  $('#installTip').innerHTML = isStandalone() ? '' : `<div class="card"><h2>📲 加入主畫面</h2><div class="info">
+    請用 <b>Safari</b> 把這個 App 加入主畫面，之後都從主畫面圖示打開，資料才會長期保存。
+    <ol><li>點 Safari 下方的「分享」按鈕</li><li>選「加入主畫面」</li><li>按右上角「加入」</li></ol></div></div>`;
+  const lb = db.lastBackup ? new Date(db.lastBackup) : null;
+  $('#backupStatus').innerHTML = `目前有 <b>${db.records.length}</b> 筆紀錄、<b>${db.reminders.length}</b> 個提醒。<br>上次備份：${lb ? `${lb.getFullYear()}/${lb.getMonth() + 1}/${lb.getDate()}` : '尚未備份'}`;
+  const info = $('#storageInfo');
+  if (navigator.storage && navigator.storage.persisted) {
+    navigator.storage.persisted().then(p => {
+      info.textContent = p ? '已開啟長期儲存保護。' : '提醒：請從主畫面圖示開啟 App，並定期備份。';
+    });
+  }
+}
+$('#exportJson').addEventListener('click', async () => {
+  const data = JSON.stringify({ app: 'dialysis-tracker', version: 1, exportedAt: new Date().toISOString(), records: db.records, reminders: db.reminders }, null, 1);
+  const ok = await shareFile(data, `洗腎紀錄備份-${today()}.json`, 'application/json');
+  if (ok) { db.lastBackup = new Date().toISOString(); save(); renderBackup(); toast('備份檔已匯出'); }
+});
+$('#importJson').addEventListener('click', () => $('#importFile').click());
+$('#importFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  if (!f) return;
+  try {
+    const d = JSON.parse(await f.text());
+    if (!Array.isArray(d.records) || !Array.isArray(d.reminders)) throw new Error('format');
+    if (!confirm(`備份檔內有 ${d.records.length} 筆紀錄、${d.reminders.length} 個提醒。\n還原後會取代目前手機上的資料，確定嗎？`)) return;
+    db.records = d.records; db.reminders = d.reminders;
+    save(); renderBackup(); toast('已還原');
+  } catch (err) { alert('無法讀取這個檔案，請確認是本 App 匯出的備份檔。'); }
+});
+$('#exportCsv').addEventListener('click', () => {
+  const rows = [['日期', '收縮壓', '舒張壓', '體重(kg)', '第一包(mL)', '第二包(mL)', '第三包(mL)', '第四包(mL)', '全天脫水量(mL)', '備註']];
+  for (const r of [...db.records].sort((a, b) => a.date.localeCompare(b.date))) {
+    rows.push([r.date, r.sys, r.dia, r.weight, ...r.bags, totalUF(r), r.note].map(x => x === null || x === undefined ? '' : x));
+  }
+  const csv = '\uFEFF' + rows.map(row => row.map(c => /[",\n]/.test(String(c)) ? `"${String(c).replace(/"/g, '""')}"` : c).join(',')).join('\r\n');
+  shareFile(csv, `洗腎紀錄-${today()}.csv`, 'text/csv');
+});
+$('#clearAll').addEventListener('click', () => {
+  if (!confirm('確定要清除所有紀錄與提醒嗎？此動作無法復原。')) return;
+  if (!confirm('再確認一次：清除前建議先匯出備份。真的要清除嗎？')) return;
+  db = { records: [], reminders: [], lastBackup: null }; save(); renderBackup(); toast('已清除');
+});
+
+/* ============ 啟動 ============ */
+if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden) render(); });
+showTab('records');
+</script>
+</body>
+</html>
