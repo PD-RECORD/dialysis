@@ -1,5 +1,5 @@
 // 離線快取。修改 App 後把版本號 +1，手機下次開啟就會更新。
-const VERSION = 'v2';
+const VERSION = 'v3';
 const CACHE = 'dialysis-' + VERSION;
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 

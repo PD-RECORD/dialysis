@@ -226,6 +226,27 @@ nav.tabs button.active { color: var(--accent); }
 .seg button { flex: 1; border: 1px solid var(--line); background: transparent; border-radius: 10px; padding: 8px 4px; min-height: 40px; font-size: 15px; }
 .seg button.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
 
+/* 照片 */
+.photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 8px; padding: 12px 14px; }
+.photos .ph { aspect-ratio: 1; border-radius: 10px; overflow: hidden; border: 0; padding: 0; background: var(--line); }
+.photos .ph img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.photos .add {
+  aspect-ratio: 1; border-radius: 10px; border: 2px dashed var(--line); background: transparent; color: var(--accent);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; gap: 2px;
+}
+.photos .add span { font-size: 26px; line-height: 1; }
+.viewer {
+  position: fixed; inset: 0; z-index: 40; background: #000; display: none; flex-direction: column;
+  padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+}
+.viewer.open { display: flex; }
+.viewer .img { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.viewer img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.viewer .vbar { display: flex; gap: 8px; padding: 12px 12px 16px; }
+.viewer .vbar button { flex: 1; border: 0; border-radius: 12px; min-height: 48px; font-weight: 600; background: #2a2f35; color: #fff; font-size: 16px; }
+.viewer .vbar .del { color: #ff7b7f; }
+.viewer .vdate { color: #aab; text-align: center; font-size: 14px; padding-top: 10px; }
+
 .toast {
   position: fixed; left: 50%; bottom: calc(var(--tabbar) + env(safe-area-inset-bottom) + 16px);
   transform: translateX(-50%); background: var(--text); color: var(--bg); padding: 10px 18px;
@@ -320,6 +341,17 @@ nav.tabs button.active { color: var(--accent); }
     <div class="sheet-body" id="sheetBody"></div>
   </div>
 </div>
+
+<div class="viewer" id="viewer">
+  <div class="vdate" id="viewerInfo"></div>
+  <div class="img"><img id="viewerImg" alt="照片"></div>
+  <div class="vbar">
+    <button id="viewerSave">存到手機相簿</button>
+    <button id="viewerDel" class="del">刪除</button>
+    <button id="viewerClose">關閉</button>
+  </div>
+</div>
+<input type="file" id="photoInput" accept="image/*" multiple hidden>
 
 <div class="toast" id="toast"></div>
 
@@ -439,7 +471,7 @@ function renderRecords() {
         <span><span class="dot" style="background:var(--uf)"></span> 脫水 <b>${uf !== null ? fmt(uf, 0) + ' mL' : '—'}</b></span>
         ${r.edema === true ? '<span class="chip warn">有水腫</span>' : r.edema === false ? '<span class="chip gray">無水腫</span>' : ''}
       </div>
-      ${r.note ? `<div class="muted small" style="margin-top:4px">${esc(r.note)}</div>` : ''}
+      ${r.note || (r.photos && r.photos.length) ? `<div class="muted small" style="margin-top:4px">${r.photos && r.photos.length ? `📷 ${r.photos.length} 張照片${r.note ? '・' : ''}` : ''}${esc(r.note)}</div>` : ''}
     </button>`;
   }
   list.innerHTML = html;
@@ -533,7 +565,10 @@ function openRecord(rec) {
           </div>
         </div>
         <div class="line" style="padding-bottom:4px"><textarea id="f-note" placeholder="其他敘述，例如：身體狀況、引流液外觀">${esc(r.note)}</textarea></div>
+        <div class="line" style="min-height:40px;padding-top:10px"><span class="small muted">照片（水腫或其他狀況）</span></div>
+        <div class="photos" id="f-photos" style="padding-top:4px"></div>
       </div>
+      <p class="hint">用相機拍的照片不會自動進相簿，想另外保存可點開照片按「存到手機相簿」。</p>
     </div>
 
     ${rec ? `<button class="btn danger block" id="f-del">刪除這筆紀錄</button>` : ''}
@@ -548,22 +583,66 @@ function openRecord(rec) {
       bags: [0, 1, 2, 3].map(i => num($(`#f-bag${i}`).value)),
       total: $('#f-manual').checked ? num($('#f-total').value) : null,
       edema,
-      note: $('#f-note').value.trim()
+      note: $('#f-note').value.trim(),
+      photos: photos.map(p => p.id)
     };
     if (out.sys !== null) out.sys = Math.round(out.sys);
     if (out.dia !== null) out.dia = Math.round(out.dia);
     const empty = out.sys === null && out.dia === null && out.weight === null &&
-      out.bags.every(x => x === null) && out.total === null && out.edema === null && !out.note;
+      out.bags.every(x => x === null) && out.total === null && out.edema === null && !out.note && !out.photos.length;
     if (empty) { toast('請至少填一個項目'); return false; }
     const dup = db.records.find(x => x.date === date && x.id !== out.id);
     if (dup) {
-      if (!confirm(`${fmtDay(date)} 已經有一筆紀錄，要用這次的內容取代嗎？`)) return false;
+      if (!confirm(`${fmtDay(date)} 已經有一筆紀錄，要用這次的內容取代嗎？${dup.photos && dup.photos.length ? '\n（該筆紀錄的照片會併入這筆）' : ''}`)) return false;
+      out.photos = [...(dup.photos || []), ...out.photos];
       db.records = db.records.filter(x => x !== dup);
     }
+    // 照片：寫入新加的、刪除移除的
+    const removed = (r.photos || []).filter(id => !out.photos.includes(id));
+    Promise.all([
+      ...photos.filter(p => p.isNew).map(p => idb.put({ id: p.id, blob: p.blob, thumb: p.thumb, date: out.date })),
+      ...removed.map(id => idb.del(id))
+    ]).catch(() => alert('照片儲存失敗，手機空間可能不足。'));
     const i = db.records.findIndex(x => x.id === out.id);
     if (i >= 0) db.records[i] = out; else db.records.push(out);
     save(); toast('已儲存');
   });
+
+  // ---- 照片 ----
+  const photos = []; // {id, isNew, blob?, thumb}
+  const drawPhotos = () => {
+    const box = $('#f-photos');
+    if (!box) return;
+    box.innerHTML = photos.map((p, i) => `<button type="button" class="ph" data-i="${i}"><img src="${p.thumb}" alt="照片 ${i + 1}"></button>`).join('') +
+      `<button type="button" class="add" id="f-addPhoto"><span>＋</span>加入照片</button>`;
+    box.querySelectorAll('.ph').forEach(b => b.addEventListener('click', () => {
+      const p = photos[Number(b.dataset.i)];
+      viewPhoto(p, out => { if (out === 'delete') { photos.splice(photos.indexOf(p), 1); drawPhotos(); } });
+    }));
+    $('#f-addPhoto').addEventListener('click', () => {
+      const inp = $('#photoInput');
+      inp.onchange = async () => {
+        const files = [...inp.files]; inp.value = '';
+        if (!files.length) return;
+        toast('照片處理中…');
+        for (const f of files) {
+          try {
+            const blob = await resizeImage(f, 1600, 0.82);
+            const thumb = await blobToDataURL(await resizeImage(f, 240, 0.7));
+            photos.push({ id: uid(), isNew: true, blob, thumb });
+          } catch (e) { toast('有照片無法讀取'); }
+        }
+        drawPhotos();
+      };
+      inp.click();
+    });
+  };
+  (async () => {
+    for (const id of r.photos || []) {
+      try { const p = await idb.get(id); if (p) photos.push({ id, isNew: false, thumb: p.thumb }); } catch (e) {}
+    }
+    drawPhotos();
+  })();
 
   const update = () => {
     const sum = [0, 1, 2, 3].map(i => num($(`#f-bag${i}`).value)).filter(x => x !== null);
@@ -590,7 +669,8 @@ function openRecord(rec) {
   syncEdema();
   const del = $('#f-del');
   if (del) del.addEventListener('click', () => {
-    if (!confirm('確定刪除這筆紀錄？')) return;
+    if (!confirm('確定刪除這筆紀錄？' + (r.photos && r.photos.length ? '\n照片也會一起刪除。' : ''))) return;
+    (r.photos || []).forEach(id => idb.del(id).catch(() => {}));
     db.records = db.records.filter(x => x.id !== r.id);
     save(); closeSheet(); render(); toast('已刪除');
   });
@@ -919,6 +999,83 @@ function addToCalendar(rems) {
   });
 }
 
+/* ============ 照片儲存（IndexedDB，存在手機本機） ============ */
+const idb = (() => {
+  let opening;
+  const open = () => opening || (opening = new Promise((res, rej) => {
+    const req = indexedDB.open('dialysis-photos', 1);
+    req.onupgradeneeded = () => req.result.createObjectStore('photos', { keyPath: 'id' });
+    req.onsuccess = () => res(req.result);
+    req.onerror = () => { opening = null; rej(req.error); };
+  }));
+  const tx = async (mode, fn) => {
+    const d = await open();
+    return new Promise((res, rej) => {
+      const t = d.transaction('photos', mode);
+      const req = fn(t.objectStore('photos'));
+      t.oncomplete = () => res(req ? req.result : undefined);
+      t.onerror = t.onabort = () => rej(t.error);
+    });
+  };
+  return {
+    get: id => tx('readonly', s => s.get(id)),
+    put: o => tx('readwrite', s => { s.put(o); }),
+    del: id => tx('readwrite', s => { s.delete(id); }),
+    all: () => tx('readonly', s => s.getAll()),
+    clear: () => tx('readwrite', s => { s.clear(); })
+  };
+})();
+
+async function resizeImage(file, maxSide, quality) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = new Image();
+    img.src = url;
+    await img.decode();
+    const s = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.naturalWidth * s);
+    c.height = Math.round(img.naturalHeight * s);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    return await new Promise((res, rej) => c.toBlob(b => b ? res(b) : rej(new Error('toBlob')), 'image/jpeg', quality));
+  } finally { URL.revokeObjectURL(url); }
+}
+const blobToDataURL = b => new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = rej; fr.readAsDataURL(b); });
+const dataURLToBlob = async u => (await fetch(u)).blob();
+
+let viewerUrl = null, viewerCb = null, viewerBlob = null, viewerName = '';
+async function viewPhoto(p, cb) {
+  viewerCb = cb;
+  viewerBlob = p.blob || (await idb.get(p.id).catch(() => null))?.blob || null;
+  if (!viewerBlob) { toast('找不到這張照片'); return; }
+  const rec = db.records.find(r => (r.photos || []).includes(p.id));
+  viewerName = `洗腎紀錄-${rec ? rec.date : today()}-${p.id.slice(-4)}.jpg`;
+  $('#viewerInfo').textContent = rec ? fmtDay(rec.date) : '新照片（尚未儲存）';
+  if (viewerUrl) URL.revokeObjectURL(viewerUrl);
+  viewerUrl = URL.createObjectURL(viewerBlob);
+  $('#viewerImg').src = viewerUrl;
+  $('#viewerDel').style.display = cb ? '' : 'none';
+  $('#viewer').classList.add('open');
+}
+function closeViewer() {
+  $('#viewer').classList.remove('open');
+  if (viewerUrl) { URL.revokeObjectURL(viewerUrl); viewerUrl = null; }
+}
+$('#viewerClose').addEventListener('click', closeViewer);
+$('#viewerSave').addEventListener('click', async () => {
+  if (!viewerBlob) return;
+  const file = new File([viewerBlob], viewerName, { type: 'image/jpeg' });
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file] }); } catch (e) {}
+  } else {
+    shareFile(viewerBlob, viewerName, 'image/jpeg');
+  }
+});
+$('#viewerDel').addEventListener('click', () => {
+  if (!confirm('要移除這張照片嗎？（按「儲存」後才會真正刪除）')) return;
+  const cb = viewerCb; closeViewer(); if (cb) cb('delete');
+});
+
 /* ============ 備份頁 ============ */
 async function shareFile(text, filename, type) {
   const file = new File([text], filename, { type });
@@ -940,7 +1097,8 @@ function renderBackup() {
     請用 <b>Safari</b> 把這個 App 加入主畫面，之後都從主畫面圖示打開，資料才會長期保存。
     <ol><li>點 Safari 下方的「分享」按鈕</li><li>選「加入主畫面」</li><li>按右上角「加入」</li></ol></div></div>`;
   const lb = db.lastBackup ? new Date(db.lastBackup) : null;
-  $('#backupStatus').innerHTML = `目前有 <b>${db.records.length}</b> 筆紀錄、<b>${db.reminders.length}</b> 個提醒。<br>上次備份：${lb ? `${lb.getFullYear()}/${lb.getMonth() + 1}/${lb.getDate()}` : '尚未備份'}`;
+  const nPhotos = db.records.reduce((n, r) => n + (r.photos ? r.photos.length : 0), 0);
+  $('#backupStatus').innerHTML = `目前有 <b>${db.records.length}</b> 筆紀錄、<b>${nPhotos}</b> 張照片、<b>${db.reminders.length}</b> 個提醒。<br>上次備份：${lb ? `${lb.getFullYear()}/${lb.getMonth() + 1}/${lb.getDate()}` : '尚未備份'}${nPhotos ? '<br>備份檔會包含照片，檔案會比較大。' : ''}`;
   const info = $('#storageInfo');
   if (navigator.storage && navigator.storage.persisted) {
     navigator.storage.persisted().then(p => {
@@ -949,7 +1107,15 @@ function renderBackup() {
   }
 }
 $('#exportJson').addEventListener('click', async () => {
-  const data = JSON.stringify({ app: 'dialysis-tracker', version: 1, exportedAt: new Date().toISOString(), records: db.records, reminders: db.reminders }, null, 1);
+  toast('準備備份檔…');
+  const used = new Set(db.records.flatMap(r => r.photos || []));
+  const photos = [];
+  try {
+    for (const p of await idb.all()) {
+      if (used.has(p.id)) photos.push({ id: p.id, date: p.date, thumb: p.thumb, data: await blobToDataURL(p.blob) });
+    }
+  } catch (e) {}
+  const data = JSON.stringify({ app: 'dialysis-tracker', version: 2, exportedAt: new Date().toISOString(), records: db.records, reminders: db.reminders, photos });
   const ok = await shareFile(data, `洗腎紀錄備份-${today()}.json`, 'application/json');
   if (ok) { db.lastBackup = new Date().toISOString(); save(); renderBackup(); toast('備份檔已匯出'); }
 });
@@ -960,7 +1126,13 @@ $('#importFile').addEventListener('change', async e => {
   try {
     const d = JSON.parse(await f.text());
     if (!Array.isArray(d.records) || !Array.isArray(d.reminders)) throw new Error('format');
-    if (!confirm(`備份檔內有 ${d.records.length} 筆紀錄、${d.reminders.length} 個提醒。\n還原後會取代目前手機上的資料，確定嗎？`)) return;
+    const ph = Array.isArray(d.photos) ? d.photos : [];
+    if (!confirm(`備份檔內有 ${d.records.length} 筆紀錄、${ph.length} 張照片、${d.reminders.length} 個提醒。\n還原後會取代目前手機上的資料，確定嗎？`)) return;
+    toast('還原中…');
+    await idb.clear();
+    for (const p of ph) {
+      await idb.put({ id: p.id, date: p.date, thumb: p.thumb, blob: await dataURLToBlob(p.data) });
+    }
     db.records = d.records; db.reminders = d.reminders;
     save(); renderBackup(); toast('已還原');
   } catch (err) { alert('無法讀取這個檔案，請確認是本 App 匯出的備份檔。'); }
@@ -976,6 +1148,7 @@ $('#exportCsv').addEventListener('click', () => {
 $('#clearAll').addEventListener('click', () => {
   if (!confirm('確定要清除所有紀錄與提醒嗎？此動作無法復原。')) return;
   if (!confirm('再確認一次：清除前建議先匯出備份。真的要清除嗎？')) return;
+  idb.clear().catch(() => {});
   db = { records: [], reminders: [], lastBackup: null }; save(); renderBackup(); toast('已清除');
 });
 
