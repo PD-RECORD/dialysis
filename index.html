@@ -437,6 +437,7 @@ function renderRecords() {
         <span><span class="dot" style="background:var(--bp-sys)"></span> 血壓 <b>${bp}</b></span>
         <span><span class="dot" style="background:var(--wt)"></span> 體重 <b>${r.weight !== null ? fmt(r.weight) + ' kg' : '—'}</b></span>
         <span><span class="dot" style="background:var(--uf)"></span> 脫水 <b>${uf !== null ? fmt(uf, 0) + ' mL' : '—'}</b></span>
+        ${r.edema === true ? '<span class="chip warn">有水腫</span>' : r.edema === false ? '<span class="chip gray">無水腫</span>' : ''}
       </div>
       ${r.note ? `<div class="muted small" style="margin-top:4px">${esc(r.note)}</div>` : ''}
     </button>`;
@@ -495,6 +496,7 @@ const v = x => x === null || x === undefined ? '' : String(x);
 function openRecord(rec) {
   const r = rec || { id: null, date: today(), sys: null, dia: null, weight: null, bags: [null, null, null, null], total: null, note: '' };
   const manual = r.total !== null && r.total !== undefined;
+  let edema = r.edema === true || r.edema === false ? r.edema : null;
   const body = `
     <div class="field"><div class="group"><div class="line"><span>日期</span><input type="date" id="f-date" value="${r.date}" max="${today()}"></div></div></div>
 
@@ -523,7 +525,15 @@ function openRecord(rec) {
     </div>
 
     <div class="field"><span class="label">備註</span>
-      <div class="group" style="padding:0 14px"><textarea id="f-note" placeholder="身體狀況、引流液外觀、水腫等">${esc(r.note)}</textarea></div>
+      <div class="group">
+        <div class="line"><span>是否水腫</span>
+          <div class="seg" id="edemaSeg" style="padding:8px 0;flex:none">
+            <button type="button" data-e="0" style="min-width:64px">無</button>
+            <button type="button" data-e="1" style="min-width:64px">有</button>
+          </div>
+        </div>
+        <div class="line" style="padding-bottom:4px"><textarea id="f-note" placeholder="其他敘述，例如：身體狀況、引流液外觀">${esc(r.note)}</textarea></div>
+      </div>
     </div>
 
     ${rec ? `<button class="btn danger block" id="f-del">刪除這筆紀錄</button>` : ''}
@@ -537,12 +547,13 @@ function openRecord(rec) {
       weight: num($('#f-weight').value),
       bags: [0, 1, 2, 3].map(i => num($(`#f-bag${i}`).value)),
       total: $('#f-manual').checked ? num($('#f-total').value) : null,
+      edema,
       note: $('#f-note').value.trim()
     };
     if (out.sys !== null) out.sys = Math.round(out.sys);
     if (out.dia !== null) out.dia = Math.round(out.dia);
     const empty = out.sys === null && out.dia === null && out.weight === null &&
-      out.bags.every(x => x === null) && out.total === null && !out.note;
+      out.bags.every(x => x === null) && out.total === null && out.edema === null && !out.note;
     if (empty) { toast('請至少填一個項目'); return false; }
     const dup = db.records.find(x => x.date === date && x.id !== out.id);
     if (dup) {
@@ -569,6 +580,14 @@ function openRecord(rec) {
     inp.value = t.startsWith('-') ? t.slice(1) : '-' + t;
     inp.focus(); update();
   }));
+  const syncEdema = () => $('#edemaSeg').querySelectorAll('button').forEach(b =>
+    b.classList.toggle('on', edema !== null && Number(b.dataset.e) === Number(edema)));
+  $('#edemaSeg').querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+    const val = b.dataset.e === '1';
+    edema = edema === val ? null : val; // 再點一次可取消
+    syncEdema();
+  }));
+  syncEdema();
   const del = $('#f-del');
   if (del) del.addEventListener('click', () => {
     if (!confirm('確定刪除這筆紀錄？')) return;
@@ -635,7 +654,8 @@ function renderAnalysis() {
   }
   html += metricCard('全天脫水量', 'mL', 'var(--uf)', 0, uf, pAvg(totalUF), days, m);
   html += metricCard('體重', 'kg', 'var(--wt)', 1, wt, pAvg(r => r.weight), days, m);
-  html += `<p class="muted small" style="text-align:center">本月共 ${cur.length} 天有紀錄・點圖上的點可看數值</p>`;
+  const edemaDays = cur.filter(r => r.edema === true).length;
+  html += `<p class="muted small" style="text-align:center">本月共 ${cur.length} 天有紀錄${edemaDays ? `・水腫 ${edemaDays} 天` : ''}<br>點圖上的點可看數值</p>`;
 
   const box = $('#analysis');
   box.innerHTML = html;
@@ -946,9 +966,9 @@ $('#importFile').addEventListener('change', async e => {
   } catch (err) { alert('無法讀取這個檔案，請確認是本 App 匯出的備份檔。'); }
 });
 $('#exportCsv').addEventListener('click', () => {
-  const rows = [['日期', '收縮壓', '舒張壓', '體重(kg)', '第一包(mL)', '第二包(mL)', '第三包(mL)', '第四包(mL)', '全天脫水量(mL)', '備註']];
+  const rows = [['日期', '收縮壓', '舒張壓', '體重(kg)', '第一包(mL)', '第二包(mL)', '第三包(mL)', '第四包(mL)', '全天脫水量(mL)', '水腫', '備註']];
   for (const r of [...db.records].sort((a, b) => a.date.localeCompare(b.date))) {
-    rows.push([r.date, r.sys, r.dia, r.weight, ...r.bags, totalUF(r), r.note].map(x => x === null || x === undefined ? '' : x));
+    rows.push([r.date, r.sys, r.dia, r.weight, ...r.bags, totalUF(r), r.edema === true ? '有' : r.edema === false ? '無' : '', r.note].map(x => x === null || x === undefined ? '' : x));
   }
   const csv = '\uFEFF' + rows.map(row => row.map(c => /[",\n]/.test(String(c)) ? `"${String(c).replace(/"/g, '""')}"` : c).join(',')).join('\r\n');
   shareFile(csv, `洗腎紀錄-${today()}.csv`, 'text/csv');
