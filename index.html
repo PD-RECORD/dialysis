@@ -200,7 +200,7 @@ nav.tabs button.active { color: var(--accent); }
 .group .line { display: flex; align-items: center; gap: 10px; padding: 0 14px; min-height: 52px; }
 .group .line + .line { border-top: 1px solid var(--line); }
 .group .line > span:first-child { flex: 1; }
-.group input[type=text], .group input[type=date], .group input[type=datetime-local], .group select, .group textarea {
+.group input[type=text], .group input[type=tel], .group input[type=date], .group input[type=datetime-local], .group select, .group textarea {
   border: 0; background: transparent; padding: 12px 0; min-width: 0; outline: none; font-size: 17px;
 }
 .group input.num { width: 110px; text-align: right; font-variant-numeric: tabular-nums; }
@@ -266,6 +266,7 @@ nav.tabs button.active { color: var(--accent); }
 <main>
   <!-- 紀錄 -->
   <section class="view active" id="view-records">
+    <div id="profile"></div>
     <div id="upcoming"></div>
     <div id="recordList"></div>
   </section>
@@ -302,6 +303,11 @@ nav.tabs button.active { color: var(--accent); }
       <h2>給醫護人員</h2>
       <p class="muted small" style="margin-top:0">匯出表格檔（CSV），可用 Excel 或 Numbers 開啟。</p>
       <button class="btn block" id="exportCsv">匯出紀錄表格</button>
+    </div>
+    <div class="card">
+      <h2>分享給病友</h2>
+      <p class="muted small" style="margin-top:0">iPhone 和安卓手機都能用。對方打開網址後加入主畫面即可，每個人的資料各自存在自己的手機裡，不會互相看到。</p>
+      <button class="btn block" id="shareApp">分享 App 網址</button>
     </div>
     <div class="card">
       <h2>其他</h2>
@@ -383,6 +389,7 @@ function save() {
   catch (e) { toast('儲存失敗，手機空間可能不足'); }
 }
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const isAndroid = /Android/i.test(navigator.userAgent);
 
 /* ============ 工具 ============ */
 const $ = (s, el = document) => el.querySelector(s);
@@ -446,7 +453,52 @@ function render() {
 }
 
 /* ============ 紀錄頁 ============ */
+function renderProfile() {
+  const p = db.profile || {};
+  const box = $('#profile');
+  if (!p.hospital && !p.doctor && !p.phone) {
+    box.innerHTML = `<button class="card" id="profEdit" style="display:flex;align-items:center;gap:12px;width:100%;border:0;text-align:left">
+      <span style="font-size:28px">🏥</span>
+      <span style="flex:1"><b>設定醫院與緊急聯絡電話</b><br><span class="muted small">填入主治醫院、醫師與電話，需要時一鍵撥打</span></span>
+      <span style="color:var(--accent);font-size:22px">›</span></button>`;
+  } else {
+    // 分機：主號碼後加逗號（撥通後自動等待再撥分機）
+    const parts = String(p.phone || '').split(/分機|轉|ext\.?|#/i);
+    const digits = s => s.replace(/[^\d+]/g, '');
+    const tel = digits(parts[0]) + (parts[1] && digits(parts[1]) ? ',' + digits(parts[1]) : '');
+    box.innerHTML = `<div class="card">
+      <div style="display:flex;align-items:flex-start;gap:10px">
+        <span style="font-size:26px;line-height:1.2">🏥</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-weight:700">${esc(p.hospital || '（未填醫院）')}</div>
+          <div class="muted small">主治醫師：${esc(p.doctor || '未填')}</div>
+        </div>
+        <button class="btn sm ghost" id="profEdit">編輯</button>
+      </div>
+      ${tel ? `<a class="btn primary block" href="tel:${tel}" style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:12px;text-decoration:none;font-size:18px">📞 緊急聯絡 ${esc(p.phone)}</a>` :
+        `<p class="muted small" style="margin:10px 0 0">尚未填寫緊急聯絡電話</p>`}
+    </div>`;
+  }
+  $('#profEdit').addEventListener('click', openProfile);
+}
+
+function openProfile() {
+  const p = db.profile || {};
+  openSheet('醫院與緊急聯絡', `
+    <div class="field"><div class="group">
+      <div class="line"><span>醫院</span><input type="text" id="p-hosp" placeholder="例如：○○醫院 腹膜透析室" value="${esc(p.hospital || '')}" style="text-align:right;flex:2"></div>
+      <div class="line"><span>主治醫師</span><input type="text" id="p-doc" placeholder="例如：王○○ 醫師" value="${esc(p.doctor || '')}" style="text-align:right;flex:2"></div>
+      <div class="line"><span>緊急聯絡電話</span><input type="tel" id="p-tel" inputmode="tel" placeholder="例如：02-1234-5678" value="${esc(p.phone || '')}" style="text-align:right;flex:2"></div>
+    </div>
+    <p class="hint">建議填透析室或醫院 24 小時可聯絡的電話。填好後在首頁點一下就能直接撥打。</p></div>
+  `, () => {
+    db.profile = { hospital: $('#p-hosp').value.trim(), doctor: $('#p-doc').value.trim(), phone: $('#p-tel').value.trim() };
+    save(); toast('已儲存');
+  });
+}
+
 function renderRecords() {
+  renderProfile();
   renderUpcoming();
   const list = $('#recordList');
   const recs = [...db.records].sort((a, b) => b.date.localeCompare(a.date));
@@ -568,7 +620,7 @@ function openRecord(rec) {
         <div class="line" style="min-height:40px;padding-top:10px"><span class="small muted">照片（水腫或其他狀況）</span></div>
         <div class="photos" id="f-photos" style="padding-top:4px"></div>
       </div>
-      <p class="hint">用相機拍的照片不會自動進相簿，想另外保存可點開照片按「存到手機相簿」。</p>
+      <p class="hint">用相機拍的照片不會自動進相簿，想另外保存可點開照片按「${isAndroid ? '下載到手機' : '存到手機相簿'}」。</p>
     </div>
 
     ${rec ? `<button class="btn danger block" id="f-del">刪除這筆紀錄</button>` : ''}
@@ -834,7 +886,7 @@ function countdownChip(days) {
 }
 
 function renderReminders() {
-  let html = `<div class="info" style="margin-bottom:14px">網頁 App 無法自己跳通知，請在設定提醒後按「加入行事曆」，由 iPhone 行事曆準時通知你。</div>`;
+  let html = `<div class="info" style="margin-bottom:14px">網頁 App 無法自己跳通知，請在設定提醒後按「加入行事曆」，由手機的${isAndroid ? ' Google 日曆' : '行事曆'}準時通知你。</div>`;
   for (const [kind, k] of Object.entries(KINDS)) {
     const items = db.reminders.filter(r => r.kind === kind).sort((a, b) => nextOccurrence(a) - nextOccurrence(b));
     html += `<div class="card"><h2><span>${k.icon}</span><span style="color:${k.color}">${k.name}</span></h2>`;
@@ -905,7 +957,7 @@ function openReminder(rem, kindDefault) {
     if (i >= 0) db.reminders[i] = out; else db.reminders.push(out);
     save();
     setTimeout(() => {
-      if (confirm(`已儲存。要現在加入 iPhone 行事曆，讓它準時通知你嗎？${rem && r.calAdded ? '\n\n（行事曆裡舊的這筆請記得手動刪除）' : ''}`)) addToCalendar([out]);
+      if (confirm(`已儲存。要現在加入手機行事曆，讓它準時通知你嗎？${rem && r.calAdded ? '\n\n（行事曆裡舊的這筆請記得手動刪除）' : ''}`)) addToCalendar([out]);
     }, 250);
   });
 
@@ -968,11 +1020,68 @@ function buildIcs(rems) {
   L.push('END:VCALENDAR');
   return L.map(fold).join('\r\n') + '\r\n';
 }
+// Google 日曆新增活動連結（安卓用）。lead = true 時建立「提前通知」那一筆
+function gcalUrl(r, lead) {
+  const k = KINDS[r.kind];
+  const ev = new Date(r.datetime);
+  const start = lead ? new Date(ev.getFullYear(), ev.getMonth(), ev.getDate() - r.lead, ev.getHours(), ev.getMinutes()) : ev;
+  const end = new Date(start.getTime() + 30 * 60000);
+  const p = new URLSearchParams({
+    action: 'TEMPLATE',
+    text: lead ? `${k.icon} 提醒：${r.lead} 天後${k.name}` : `${k.icon} ${k.name}`,
+    dates: `${icsUtc(start)}/${icsUtc(end)}`,
+    details: (lead ? `${r.lead} 天後（${fmtDT(ev)}）` : '') + k.action + (r.note ? '\n' + r.note : '')
+  });
+  if (r.repeat > 0) p.set('recur', `RRULE:FREQ=DAILY;INTERVAL=${r.repeat}`);
+  return 'https://calendar.google.com/calendar/render?' + p.toString();
+}
+function openExternal(url) {
+  const a = document.createElement('a');
+  a.href = url; a.target = '_blank'; a.rel = 'noopener';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+function downloadIcs(ics, name) {
+  const url = URL.createObjectURL(new Blob([ics], { type: 'text/calendar;charset=utf-8' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60000);
+}
+function addToCalendarAndroid(rems, ics, name) {
+  const rows = rems.map(r => {
+    const k = KINDS[r.kind];
+    return `<div class="card" style="box-shadow:none;border:1px solid var(--line)">
+      <div style="font-weight:700">${k.icon} ${k.name}　<span class="muted small">${fmtDT(new Date(r.datetime))}${r.repeat > 0 ? `・每 ${r.repeat} 天` : ''}</span></div>
+      <div class="list-btns" style="margin-top:10px">
+        <button class="btn primary block" data-g="${r.id}">① 加入 Google 日曆</button>
+        ${r.lead > 0 ? `<button class="btn block" data-gl="${r.id}">② 加入提前 ${r.lead} 天的通知</button>` : ''}
+      </div></div>`;
+  }).join('');
+  openSheet('加入行事曆', `
+    <div class="info">按按鈕會開啟 <b>Google 日曆</b>，請在日曆畫面按右上角「<b>儲存</b>」，完成後回到這個 App。${rems.some(r => r.lead > 0) ? '<br>有設定「提前提醒」的，請把 ① ② 兩個都加入。' : ''}</div>
+    <div style="margin-top:14px">${rows}</div>
+    <button class="btn block" id="cal-ics">改用行事曆檔（三星等內建日曆）</button>
+    <p class="hint" style="margin-top:10px">Google 日曆會在活動時間依你的預設通知提醒（通常為 30 分鐘前，可在日曆裡修改）。</p>
+  `, null);
+  const mark = id => { const r = db.reminders.find(x => x.id === id); if (r) { r.calAdded = true; save(); } };
+  $('#sheetBody').querySelectorAll('[data-g]').forEach(b => b.addEventListener('click', () => {
+    mark(b.dataset.g); b.textContent = '✓ 已開啟 Google 日曆'; openExternal(gcalUrl(db.reminders.find(x => x.id === b.dataset.g), false));
+  }));
+  $('#sheetBody').querySelectorAll('[data-gl]').forEach(b => b.addEventListener('click', () => {
+    mark(b.dataset.gl); b.textContent = '✓ 已開啟 Google 日曆'; openExternal(gcalUrl(db.reminders.find(x => x.id === b.dataset.gl), true));
+  }));
+  $('#cal-ics').addEventListener('click', () => {
+    rems.forEach(r => r.calAdded = true); save();
+    downloadIcs(ics, name);
+    toast('已下載，請在通知列或「下載」資料夾點開');
+  });
+}
 function addToCalendar(rems) {
   rems = rems.filter(Boolean);
   if (!rems.length) return;
   const ics = buildIcs(rems);
   const name = rems.length === 1 ? `${KINDS[rems[0].kind].name}提醒.ics` : '洗腎提醒.ics';
+  if (isAndroid) return addToCalendarAndroid(rems, ics, name);
   openSheet('加入行事曆', `
     <div class="info">按下面的按鈕後，iPhone 會顯示行事曆畫面，請按「<b>加入</b>」或「<b>全部加入</b>」。</div>
     <div class="list-btns" style="margin-top:14px">
@@ -1065,12 +1174,20 @@ $('#viewerClose').addEventListener('click', closeViewer);
 $('#viewerSave').addEventListener('click', async () => {
   if (!viewerBlob) return;
   const file = new File([viewerBlob], viewerName, { type: 'image/jpeg' });
-  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+  if (!isAndroid && navigator.canShare && navigator.canShare({ files: [file] })) {
+    // iPhone：分享選單 →「儲存影像」
     try { await navigator.share({ files: [file] }); } catch (e) {}
   } else {
-    shareFile(viewerBlob, viewerName, 'image/jpeg');
+    // 安卓：直接下載，會出現在相簿／Google 相簿的「Download」資料夾
+    const url = URL.createObjectURL(file);
+    const a = document.createElement('a');
+    a.href = url; a.download = viewerName;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60000);
+    toast('已下載到手機');
   }
 });
+$('#viewerSave').textContent = isAndroid ? '下載到手機' : '存到手機相簿';
 $('#viewerDel').addEventListener('click', () => {
   if (!confirm('要移除這張照片嗎？（按「儲存」後才會真正刪除）')) return;
   const cb = viewerCb; closeViewer(); if (cb) cb('delete');
@@ -1093,9 +1210,11 @@ async function shareFile(text, filename, type) {
 const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
 
 function renderBackup() {
-  $('#installTip').innerHTML = isStandalone() ? '' : `<div class="card"><h2>📲 加入主畫面</h2><div class="info">
-    請用 <b>Safari</b> 把這個 App 加入主畫面，之後都從主畫面圖示打開，資料才會長期保存。
-    <ol><li>點 Safari 下方的「分享」按鈕</li><li>選「加入主畫面」</li><li>按右上角「加入」</li></ol></div></div>`;
+  $('#installTip').innerHTML = isStandalone() ? '' : `<div class="card"><h2>📲 加入主畫面</h2><div class="info">${isAndroid ?
+    `請用 <b>Chrome</b> 把這個 App 加入主畫面，之後都從桌面圖示打開，資料才會長期保存。
+    <ol><li>點 Chrome 右上角「⋮」</li><li>選「加到主畫面」或「安裝應用程式」</li><li>按「安裝」或「新增」</li></ol>` :
+    `請用 <b>Safari</b> 把這個 App 加入主畫面，之後都從主畫面圖示打開，資料才會長期保存。
+    <ol><li>點 Safari 下方的「分享」按鈕</li><li>選「加入主畫面」</li><li>按右上角「加入」</li></ol>`}</div></div>`;
   const lb = db.lastBackup ? new Date(db.lastBackup) : null;
   const nPhotos = db.records.reduce((n, r) => n + (r.photos ? r.photos.length : 0), 0);
   $('#backupStatus').innerHTML = `目前有 <b>${db.records.length}</b> 筆紀錄、<b>${nPhotos}</b> 張照片、<b>${db.reminders.length}</b> 個提醒。<br>上次備份：${lb ? `${lb.getFullYear()}/${lb.getMonth() + 1}/${lb.getDate()}` : '尚未備份'}${nPhotos ? '<br>備份檔會包含照片，檔案會比較大。' : ''}`;
@@ -1115,7 +1234,7 @@ $('#exportJson').addEventListener('click', async () => {
       if (used.has(p.id)) photos.push({ id: p.id, date: p.date, thumb: p.thumb, data: await blobToDataURL(p.blob) });
     }
   } catch (e) {}
-  const data = JSON.stringify({ app: 'dialysis-tracker', version: 2, exportedAt: new Date().toISOString(), records: db.records, reminders: db.reminders, photos });
+  const data = JSON.stringify({ app: 'dialysis-tracker', version: 2, exportedAt: new Date().toISOString(), records: db.records, reminders: db.reminders, profile: db.profile || null, photos });
   const ok = await shareFile(data, `洗腎紀錄備份-${today()}.json`, 'application/json');
   if (ok) { db.lastBackup = new Date().toISOString(); save(); renderBackup(); toast('備份檔已匯出'); }
 });
@@ -1134,6 +1253,7 @@ $('#importFile').addEventListener('change', async e => {
       await idb.put({ id: p.id, date: p.date, thumb: p.thumb, blob: await dataURLToBlob(p.data) });
     }
     db.records = d.records; db.reminders = d.reminders;
+    if (d.profile) db.profile = d.profile;
     save(); renderBackup(); toast('已還原');
   } catch (err) { alert('無法讀取這個檔案，請確認是本 App 匯出的備份檔。'); }
 });
@@ -1145,11 +1265,21 @@ $('#exportCsv').addEventListener('click', () => {
   const csv = '\uFEFF' + rows.map(row => row.map(c => /[",\n]/.test(String(c)) ? `"${String(c).replace(/"/g, '""')}"` : c).join(',')).join('\r\n');
   shareFile(csv, `洗腎紀錄-${today()}.csv`, 'text/csv');
 });
+$('#shareApp').addEventListener('click', async () => {
+  const url = location.origin + location.pathname;
+  const text = '洗腎紀錄 App：記錄血壓、體重、脫水量，還有回診與領藥提醒。iPhone 請用 Safari、安卓請用 Chrome 打開，再「加入主畫面」。';
+  if (navigator.share) {
+    try { await navigator.share({ title: '洗腎紀錄', text, url }); } catch (e) {}
+  } else {
+    try { await navigator.clipboard.writeText(text + '\n' + url); toast('網址已複製'); }
+    catch (e) { prompt('請複製這個網址', url); }
+  }
+});
 $('#clearAll').addEventListener('click', () => {
   if (!confirm('確定要清除所有紀錄與提醒嗎？此動作無法復原。')) return;
   if (!confirm('再確認一次：清除前建議先匯出備份。真的要清除嗎？')) return;
   idb.clear().catch(() => {});
-  db = { records: [], reminders: [], lastBackup: null }; save(); renderBackup(); toast('已清除');
+  db = { records: [], reminders: [], profile: null, lastBackup: null }; save(); renderBackup(); toast('已清除');
 });
 
 /* ============ 啟動 ============ */
