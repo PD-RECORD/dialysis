@@ -451,6 +451,30 @@ details.raw pre { white-space: pre-wrap; font-size: 13px; background: var(--bg);
 </div>
 <input type="file" id="docInput" accept="image/*" hidden>
 
+<div class="sheet-wrap" id="shotTip" style="align-items:center;z-index:50">
+  <div class="card" style="max-width:420px;margin:16px;padding:20px">
+    <h2 style="font-size:20px">📸 拍報告前請注意</h2>
+    <div style="display:flex;gap:12px;align-items:center;margin:6px 0 12px">
+      <svg viewBox="0 0 220 64" width="100%" height="72" aria-hidden="true" style="max-width:300px">
+        <rect x="4" y="30" width="40" height="28" rx="2" fill="none" stroke="currentColor" stroke-width="2"/>
+        <path d="M11 38h26M11 45h26M11 52h16" stroke="currentColor" stroke-width="2"/>
+        <rect x="192" y="18" width="20" height="36" rx="4" fill="none" stroke="currentColor" stroke-width="2"/>
+        <path d="M54 44H182" stroke="var(--accent)" stroke-width="2" stroke-dasharray="5 4"/>
+        <path d="M54 44l7-5M54 44l7 5M182 44l-7-5M182 44l-7 5" stroke="var(--accent)" stroke-width="2" fill="none"/>
+        <text x="118" y="32" text-anchor="middle" font-size="15" font-weight="700" fill="var(--accent)">1 公尺以上＋變焦</text>
+      </svg>
+    </div>
+    <ol style="margin:0 0 12px;padding-left:22px;line-height:1.7">
+      <li>手機距離報告保持 <b>1 公尺以上</b>。</li>
+      <li>用相機的<b>變焦</b>（2x、3x 或兩指放大）把報告放大到填滿畫面。</li>
+      <li>報告放平、手機正對紙面，再按下快門。</li>
+    </ol>
+    <p class="small muted" style="margin:0 0 14px">距離 1 公尺以上，手和手機的影子才不會蓋到文字與數字，辨識會準很多。</p>
+    <label style="display:flex;align-items:center;gap:8px;margin-bottom:14px" class="small"><input type="checkbox" id="shotTipHide" style="width:20px;height:20px"> 下次不再顯示</label>
+    <div class="row"><button class="btn" id="shotTipCancel">取消</button><button class="btn primary" id="shotTipGo">我知道了，開始拍照</button></div>
+  </div>
+</div>
+
 <div class="viewer" id="viewer">
   <div class="vdate" id="viewerInfo"></div>
   <div class="img"><img id="viewerImg" alt="照片"></div>
@@ -1231,18 +1255,22 @@ const LAB_ITEMS = [
   { g: '電解質', k: 'na', n: '鈉', e: 'Na', u: 'mmol/L', re: /Sodium|\bNa\b|鈉/i },
   { g: '電解質', k: 'k', n: '鉀', e: 'K', u: 'mmol/L', re: /Potassium|\bK\b|鉀/i },
   { g: '電解質', k: 'ca', n: '鈣', e: 'Ca', u: 'mg/dL', re: /Calcium|\bCa\b|鈣/i },
-  { g: '電解質', k: 'p', n: '磷', e: 'P', u: 'mg/dL', re: /Phosph\w*|\bI?P\b|磷/i },
+  { g: '電解質', k: 'p', n: '磷', e: 'P', u: 'mg/dL', re: /Phosph\w*|\bI?P\b|磷/i, ex: /ALK|Alkaline|鹼性|磷脂/i },
   { g: '電解質', k: 'ipth', n: '副甲狀腺素', e: 'iPTH', u: 'pg/mL', re: /i-?PTH|\bPTH\b|副甲狀腺/i },
   { g: '營養與貧血', k: 'alb', n: '白蛋白', e: 'Alb', u: 'g/dL', re: /Albumin|\bALB\b|白蛋白/i },
-  { g: '營養與貧血', k: 'hb', n: '血色素', e: 'Hb', u: 'g/dL', re: /Ha?emoglobin|\bHb\b|\bHGB\b|血色素|血紅素/i, ex: /A1c|糖化/i },
-  { g: '營養與貧血', k: 'hct', n: '血球容積比', e: 'Hct', u: '%', re: /Hematocrit|\bHct\b|血比容|血球容積/i },
+  { g: '營養與貧血', k: 'hb', n: '血色素', e: 'Hb', u: 'g/dL', re: /Ha?emoglobin|\bHb\b|\bHGB\b|血色素|血紅素/i, ex: /A1c|糖化|MCH|平均/i },
+  { g: '營養與貧血', k: 'hct', n: '血球容積比', e: 'Hct', u: '%', re: /Hematocrit|\bHc?t\b|血球比容|血比容|血球容積/i, ex: /MCV|平均/i },
+  { g: '營養與貧血', k: 'wbc', n: '白血球', e: 'WBC', u: '10³/uL', re: /\bWBC\b|白血球/i },
+  { g: '營養與貧血', k: 'plt', n: '血小板', e: 'PLT', u: '10³/uL', re: /Platelet|\bPLT\b|血小板/i },
   { g: '營養與貧血', k: 'fer', n: '鐵蛋白', e: 'Ferritin', u: 'ng/mL', re: /Ferritin|鐵蛋白/i },
   { g: '營養與貧血', k: 'tsat', n: '運鐵蛋白飽和度', e: 'TSAT', u: '%', re: /TSAT|Transferrin\s*sat\w*|飽和度/i },
   { g: '血糖與血脂', k: 'glu', n: '飯前血糖', e: 'Glu', u: 'mg/dL', re: /Glucose|\bGlu\b|血糖/i, ex: /A1c|糖化/i },
   { g: '血糖與血脂', k: 'hba1c', n: '糖化血色素', e: 'HbA1c', u: '%', re: /HbA1c|\bA1C\b|糖化血色素/i },
   { g: '血糖與血脂', k: 'chol', n: '總膽固醇', e: 'Chol', u: 'mg/dL', re: /Cholesterol|\bT-?CHOL?\b|\bCHOL\b|膽固醇/i, ex: /LDL|HDL/i },
   { g: '血糖與血脂', k: 'tg', n: '三酸甘油脂', e: 'TG', u: 'mg/dL', re: /Triglyceride\w*|\bTG\b|三酸甘油/i },
-  { g: '其他', k: 'alt', n: '肝功能', e: 'GPT/ALT', u: 'U/L', re: /\bS?GPT\b|\bALT\b/i },
+  { g: '其他', k: 'alt', n: '肝功能 GPT', e: 'GPT/ALT', u: 'U/L', re: /\bS?GPT\b|\bALT\b/i },
+  { g: '其他', k: 'ast', n: '肝功能 GOT', e: 'GOT/AST', u: 'U/L', re: /\bS?GOT\b|\bAST\b/i },
+  { g: '其他', k: 'alkp', n: '鹼性磷酸酶', e: 'ALK-P', u: 'U/L', re: /ALK[\s\-]*P|Alkaline\s*phos\w*|鹼性磷/i },
   { g: '其他', k: 'crp', n: 'C反應蛋白', e: 'CRP', u: 'mg/dL', re: /\bCRP\b|C反應蛋白/i }
 ];
 const TESSERACT_URL = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
@@ -1252,35 +1280,158 @@ function normalizeOcr(t) {
   return String(t)
     .replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
     .replace(/[Ａ-Ｚａ-ｚ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
-    .replace(/[／]/g, '/').replace(/[（]/g, '(').replace(/[）]/g, ')')
+    .replace(/[／]/g, '/').replace(/[（]/g, '(').replace(/[）]/g, ')').replace(/[：]/g, ':')
     .replace(/(\d)\s*[．。·]\s*(\d)/g, '$1.$2')
     .replace(/([㐀-鿿])[ \t]+(?=[㐀-鿿])/g, '$1');
 }
+const isCJK = ch => /[㐀-鿿]/.test(ch || '');
+function matchItem(it, text) {
+  if (it.ex && it.ex.test(text)) return null;
+  return it.re.exec(text);
+}
+// 數值字樣（容許結尾的 H/L/* 標記），不含參考值範圍
+function valueToken(t) {
+  t = normalizeOcr(t).trim().replace(/[HL*↑↓]+$/i, '').trim();
+  const m = t.match(/^[<>]?(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)$/);
+  return m ? Number(m[1].replace(/,/g, '')) : null;
+}
+const firstNumberAfter = rest => {
+  const nm = rest.match(/(?:^|[^\d.\-~])(\d{1,3}(?:,\d{3})+(?!\d)|\d+(?:\.\d+)?)(?![\d.]*\s*[\-~]\s*\d)/);
+  return nm ? Number(nm[1].replace(/,/g, '')) : null;
+};
+
+// 報告日期：優先採檢／採血日期，其次檢驗、報告、收件日期，最後才用其他日期（不用列印、申請、生日）
+function findReportDate(text) {
+  const t = normalizeOcr(text);
+  const D = String.raw`(20\d{2}|1[01]\d)\s*[\/\-.年]\s*(\d{1,2})\s*[\/\-.月]\s*(\d{1,2})`;
+  const toIso = m => {
+    let y = Number(m[1]); if (y < 1911) y += 1911;
+    const mo = Number(m[2]), d = Number(m[3]);
+    return mo >= 1 && mo <= 12 && d >= 1 && d <= 31 ? `${y}-${pad(mo)}-${pad(d)}` : null;
+  };
+  for (const label of ['採\\s*檢', '採\\s*血', '抽\\s*血', '檢驗日期', '報告日期', '收件', '確認時間']) {
+    const m = t.match(new RegExp(label + String.raw`[^\d\n]{0,8}` + D));
+    if (m) { const d = toIso(m); if (d) return d; }
+  }
+  const re = new RegExp(D, 'g'); let m;
+  while ((m = re.exec(t))) {
+    const before = t.slice(Math.max(0, m.index - 8), m.index);
+    if (/列印|申請|生\s*日|出生/.test(before)) continue;
+    const d = toIso(m); if (d) return d;
+  }
+  return null;
+}
+
+// 純文字解析（貼上的文字、或 OCR 沒有位置資訊時）
 function parseLabText(text) {
   const values = {};
-  const lines = normalizeOcr(text).split(/\r?\n/);
-  for (const line of lines) {
+  const lines = normalizeOcr(text).split(/\r?\n/).map(x => x.trim()).filter(Boolean);
+  const itemLines = [];           // 有項目名稱、但同一行沒有數值
+  const hasItem = line => LAB_ITEMS.some(it => matchItem(it, line));
+  lines.forEach((line, i) => {
     for (const it of LAB_ITEMS) {
       if (values[it.k] !== undefined) continue;
-      if (it.ex && it.ex.test(line)) continue;
-      const m = it.re.exec(line);
+      const m = matchItem(it, line);
       if (!m) continue;
-      const rest = line.slice(m.index + m[0].length);
-      const nm = rest.match(/(?:^|[^\d.\-])(\d{1,3}(?:,\d{3})+(?!\d)|\d+(?:\.\d+)?)/);
-      if (!nm) continue;
-      const v = Number(nm[1].replace(/,/g, ''));
-      if (Number.isFinite(v)) values[it.k] = v;
+      const v = firstNumberAfter(line.slice(m.index + m[0].length));
+      if (v !== null) values[it.k] = v;
+      else itemLines.push({ i, k: it.k });
+    }
+  });
+  if (itemLines.length) {
+    const isValueLine = l => !hasItem(l) && /^[<>]?\d/.test(l) && valueToken(l.split(/\s+/)[0]) !== null;
+    const valueLines = lines.map((l, i) => ({ l, i })).filter(x => isValueLine(x.l));
+    const pureValues = valueLines.filter(x => valueToken(x.l) !== null);
+    const used = new Set();
+    // 欄位式（先列全部名稱、再列全部數值）：數量相同就依序配對
+    if (itemLines.length >= 2 && pureValues.length === itemLines.length && pureValues[0].i > itemLines[itemLines.length - 1].i) {
+      itemLines.forEach((x, j) => { if (values[x.k] === undefined) values[x.k] = valueToken(pureValues[j].l); });
+    } else {
+      // 數值在名稱的下一行或上一行（照片歪斜時常見）：先判斷整張是哪一種
+      const isVal = new Set(valueLines.map(v => v.i));
+      const score = d => itemLines.filter(x => isVal.has(x.i + d)).length;
+      const dir = score(-1) > score(1) ? -1 : 1;
+      for (const d of [dir, -dir]) {
+        for (const x of itemLines) {
+          if (values[x.k] !== undefined) continue;
+          const j = x.i + d;
+          if (isVal.has(j) && !used.has(j)) { values[x.k] = valueToken(lines[j].split(/\s+/)[0]); used.add(j); }
+        }
+      }
     }
   }
-  // 報告日期（西元或民國）
-  let date = null;
-  const dm = normalizeOcr(text).match(/(20\d{2}|1[01]\d)\s*[\/\-.年]\s*(\d{1,2})\s*[\/\-.月]\s*(\d{1,2})/);
-  if (dm) {
-    let y = Number(dm[1]); if (y < 1911) y += 1911;
-    const mo = Number(dm[2]), d = Number(dm[3]);
-    if (mo >= 1 && mo <= 12 && d >= 1 && d <= 31) date = `${y}-${pad(mo)}-${pad(d)}`;
+  return { values, date: findReportDate(text) };
+}
+
+// 依照片位置配對：名稱右邊、高度最接近的數值（自動修正照片歪斜）
+function parseLabGeo(lines) {
+  const nums = [], names = [];
+  for (const l of lines) {
+    let S = '', spans = [];
+    l.words.forEach(w => {
+      const t = normalizeOcr(w.text);
+      if (S && !(isCJK(S[S.length - 1]) && isCJK(t[0]))) S += ' ';
+      spans.push({ a: S.length, b: S.length + t.length, w });
+      S += t;
+      const v = valueToken(w.text);
+      if (v !== null) nums.push({ v, x0: w.x0, cy: (w.y0 + w.y1) / 2, h: w.y1 - w.y0 });
+    });
+    for (const it of LAB_ITEMS) {
+      const m = matchItem(it, S);
+      if (!m) continue;
+      const end = m.index + m[0].length;
+      const sp = spans.find(x => x.b >= end) || spans[spans.length - 1];
+      // 名稱可能延伸到後面的中文字（例如「血中尿素氮」），取到下一個數值之前
+      let lastName = sp;
+      for (const x of spans.slice(spans.indexOf(sp) + 1)) { if (valueToken(x.w.text) !== null) break; if (/[A-Za-z㐀-鿿]/.test(x.w.text) && x.w.x0 - lastName.w.x1 < 3 * (x.w.y1 - x.w.y0)) lastName = x; else break; }
+      const w = lastName.w;
+      names.push({ k: it.k, x1: w.x1, cy: (sp.w.y0 + sp.w.y1) / 2, h: Math.max(8, sp.w.y1 - sp.w.y0) });
+    }
   }
-  return { values, date };
+  if (!names.length || !nums.length) return {};
+  const right = (n, c) => c.x0 > n.x1 + n.h * 0.3;
+  // 第一輪：估計歪斜造成的上下位移與「檢驗結果」欄的位置
+  const dys = [], xs = [];
+  for (const n of names) {
+    const c = nums.filter(c => right(n, c) && Math.abs(c.cy - n.cy) < 1.6 * n.h)
+      .sort((a, b) => Math.abs(a.cy - n.cy) - Math.abs(b.cy - n.cy) || a.x0 - b.x0)[0];
+    if (c) { dys.push(c.cy - n.cy); xs.push(c.x0); }
+  }
+  const median = a => { const b = [...a].sort((x, y) => x - y); return b.length ? b[Math.floor(b.length / 2)] : 0; };
+  // 結果欄：每列最左邊的數值
+  const leftmost = [];
+  for (const n of names) {
+    const c = nums.filter(c => right(n, c) && Math.abs(c.cy - n.cy) < 1.6 * n.h).sort((a, b) => a.x0 - b.x0)[0];
+    if (c) leftmost.push(c.x0);
+  }
+  const off = median(dys), colX = median(leftmost.length ? leftmost : xs);
+  // 第二輪：整體最佳配對（每個數值只用一次）
+  const pairs = [];
+  names.forEach((n, ni) => nums.forEach((c, ci) => {
+    if (!right(n, c)) return;
+    const dy = Math.abs(c.cy - n.cy - off), dx = Math.abs(c.x0 - colX);
+    if (dy > 1.1 * n.h || dx > 4 * n.h) return;
+    pairs.push({ ni, ci, cost: dy / n.h + dx / (6 * n.h) });
+  }));
+  pairs.sort((a, b) => a.cost - b.cost);
+  const usedN = new Set(), usedC = new Set(), values = {};
+  for (const p of pairs) {
+    if (usedN.has(p.ni) || usedC.has(p.ci)) continue;
+    const k = names[p.ni].k;
+    if (values[k] !== undefined) { usedN.add(p.ni); continue; }
+    values[k] = nums[p.ci].v; usedN.add(p.ni); usedC.add(p.ci);
+  }
+  return values;
+}
+
+function parseLab(res) {
+  const text = typeof res === 'string' ? res : res.text || '';
+  const t = parseLabText(text);
+  if (res && res.lines && res.lines.length) {
+    const g = parseLabGeo(res.lines);
+    return { values: { ...t.values, ...g }, date: t.date };   // 有位置資訊時以位置配對為準
+  }
+  return t;
 }
 
 function loadScript(src) {
@@ -1289,6 +1440,47 @@ function loadScript(src) {
     s.src = src; s.onload = res; s.onerror = () => rej(new Error('load'));
     document.head.appendChild(s);
   });
+}
+// 轉灰階並拉高對比，改善陰影、反光照片的辨識
+async function prepForOcr(blob) {
+  const url = URL.createObjectURL(blob);
+  try {
+    const img = new Image(); img.src = url; await img.decode();
+    const s = Math.min(2.0, 2400 / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
+    const g = c.getContext('2d'); g.drawImage(img, 0, 0, c.width, c.height);
+    const d = g.getImageData(0, 0, c.width, c.height), p = d.data;
+    const hist = new Uint32Array(256);
+    for (let i = 0; i < p.length; i += 4) { const y = (p[i] * 299 + p[i + 1] * 587 + p[i + 2] * 114) / 1000 | 0; p[i] = y; hist[y]++; }
+    const n = p.length / 4; let lo = 0, hi = 255, acc = 0;
+    for (let i = 0; i < 256; i++) { acc += hist[i]; if (acc > n * 0.01) { lo = i; break; } }
+    acc = 0; for (let i = 255; i >= 0; i--) { acc += hist[i]; if (acc > n * 0.05) { hi = i; break; } }
+    const r = Math.max(1, hi - lo);
+    for (let i = 0; i < p.length; i += 4) { const v = Math.max(0, Math.min(255, (p[i] - lo) * 255 / r)); p[i] = p[i + 1] = p[i + 2] = v; }
+    g.putImageData(d, 0, 0);
+    return await new Promise(res => c.toBlob(b => res(b || blob), 'image/png'));
+  } catch (e) { return blob; } finally { URL.revokeObjectURL(url); }
+}
+function linesFromOcr(data) {
+  const groups = new Map();
+  if (data.tsv) {
+    for (const row of data.tsv.split('\n')) {
+      const c = row.split('\t');
+      if (c.length < 12 || c[0] !== '5' || !c[11].trim()) continue;
+      const [lvl, pg, b, par, ln, wn, x, y, w, h] = c.map(Number);
+      const key = `${b}-${par}-${ln}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push({ text: c[11], x0: x, y0: y, x1: x + w, y1: y + h });
+    }
+  } else if (Array.isArray(data.words)) {
+    for (const w of data.words) {
+      const key = w.line && w.line.bbox ? JSON.stringify(w.line.bbox) : String(w.bbox.y0);
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push({ text: w.text, x0: w.bbox.x0, y0: w.bbox.y0, x1: w.bbox.x1, y1: w.bbox.y1 });
+    }
+  }
+  return [...groups.values()].map(words => ({ words: words.sort((a, b) => a.x0 - b.x0) }));
 }
 async function ocrImage(blob, onProgress) {
   if (!window.Tesseract) await loadScript(TESSERACT_URL);
@@ -1300,8 +1492,9 @@ async function ocrImage(blob, onProgress) {
       }
     });
   }
-  const { data } = await ocrWorker.recognize(blob);
-  return data.text || '';
+  const img = await prepForOcr(blob);
+  const { data } = await ocrWorker.recognize(img, {}, { text: true, tsv: true });
+  return { text: data.text || '', lines: linesFromOcr(data) };
 }
 
 const ym = s => s.slice(0, 7);
@@ -1404,6 +1597,7 @@ function openLab(lab) {
     <div class="field"><span class="label">報告照片（可以多張）</span>
       <div class="group"><div class="photos" id="lab-photos"></div></div>
       <p class="hint">每一張報告拍一張照片，依序加入；從相簿可一次選多張。</p>
+      <div class="info small" style="margin-top:8px">📸 <b>拍照提示：</b>手機距離報告保持 <b>1 公尺以上</b>，再用相機的<b>變焦</b>功能（例如 2x、3x）把報告放大拍攝。距離 1 公尺以上，手和手機的影子才不會蓋到文字與數字，辨識會準很多。</div>
       <div class="list-btns" style="margin-top:10px">
         <button class="btn primary block" id="lab-ocr">🔍 辨識照片中的數值</button>
         <button class="btn block" id="lab-paste-btn">📋 改用貼上文字</button>
@@ -1471,8 +1665,9 @@ function openLab(lab) {
     }));
   };
   // 解析一張報告的文字：只填空白欄；與已填數值不同時列出讓病友選
-  const applyParsed = (text, label) => {
-    const { values, date } = parseLabText(text);
+  const applyParsed = (res, label) => {
+    const text = typeof res === 'string' ? res : res.text || '';
+    const { values, date } = parseLab(res);
     let n = 0; const conflicts = [];
     for (const [k, v] of Object.entries(values)) {
       const inp = $(`#sheetBody .lab-item input[data-k="${k}"]`);
@@ -1507,7 +1702,7 @@ function openLab(lab) {
       const p = photos[Number(b.dataset.i)];
       viewPhoto(p, out => { if (out === 'delete') { photos.splice(photos.indexOf(p), 1); ocrDone.delete(p.id); drawPhotos(); } });
     }));
-    $('#lab-addPhoto').addEventListener('click', () => {
+    $('#lab-addPhoto').addEventListener('click', () => withShotTip(() => {
       const inp = $('#photoInput');
       inp.onchange = async () => {
         const files = [...inp.files]; inp.value = '';
@@ -1521,7 +1716,7 @@ function openLab(lab) {
         drawPhotos();
       };
       inp.click();
-    });
+    }));
     refreshOcrBtn(); markFilled();
   };
   (async () => {
@@ -1550,13 +1745,13 @@ function openLab(lab) {
         const page = photos.indexOf(p) + 1;
         const blob = p.blob || (await idb.get(p.id))?.blob;
         if (!blob) continue;
-        const text = await ocrImage(blob, (label, pr) => {
+        const res = await ocrImage(blob, (label, pr) => {
           const done = log.map(x => `<div style="margin:4px 0">${x.html}</div>`).join('');
           st.innerHTML = `<div class="info small" style="margin-top:10px">${done}<div style="margin:4px 0">${label}：第 ${page} 張（${t + 1}/${targets.length}）… ${Math.round(pr * 100)}%</div>
             <div class="ocr-bar"><div style="width:${Math.round(pr * 100)}%"></div></div></div>`;
         });
         ocrDone.add(p.id);
-        applyParsed(text, `第 ${page} 張照片`);
+        applyParsed(res, `第 ${page} 張照片`);
         drawPhotos();
       }
       try { localStorage.setItem('ocr-ready', '1'); } catch (e) {}
@@ -1588,6 +1783,22 @@ function openLab(lab) {
   });
   markFilled();
 }
+
+// 拍報告前的提示（按「開始拍照」才開相機，確保手機允許開啟）
+let shotTipCb = null;
+function withShotTip(cb) {
+  let hide = false; try { hide = localStorage.getItem('shot-tip-hide') === '1'; } catch (e) {}
+  if (hide) return cb();
+  shotTipCb = cb;
+  $('#shotTipHide').checked = false;
+  $('#shotTip').classList.add('open');
+}
+$('#shotTipCancel').addEventListener('click', () => { $('#shotTip').classList.remove('open'); shotTipCb = null; });
+$('#shotTipGo').addEventListener('click', () => {
+  if ($('#shotTipHide').checked) { try { localStorage.setItem('shot-tip-hide', '1'); } catch (e) {} }
+  $('#shotTip').classList.remove('open');
+  const cb = shotTipCb; shotTipCb = null; if (cb) cb();
+});
 
 /* ============ 身心障礙證明 ============ */
 const DOCS = {
