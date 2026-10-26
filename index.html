@@ -167,7 +167,7 @@ nav.tabs {
   background: color-mix(in srgb, var(--card) 92%, transparent);
   -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
   border-top: 1px solid var(--line);
-  display: grid; grid-template-columns: repeat(4, 1fr);
+  display: grid; grid-template-columns: repeat(6, 1fr);
 }
 nav.tabs button {
   border: 0; background: transparent; color: var(--muted); display: flex; flex-direction: column;
@@ -226,6 +226,79 @@ nav.tabs button.active { color: var(--accent); }
 .seg button { flex: 1; border: 1px solid var(--line); background: transparent; border-radius: 10px; padding: 8px 4px; min-height: 40px; font-size: 15px; }
 .seg button.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
 
+/* 機台問題 */
+.m-intro { font-size: 16px; margin: 0 0 14px; }
+.m-sec { font-size: 19px; font-weight: 800; margin: 22px 4px 6px; }
+.m-desc { font-size: 15px; color: var(--muted); margin: 0 4px 12px; }
+.m-card h3 { margin: 0 0 2px; font-size: 18px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.m-card .en { color: var(--danger); font-style: italic; font-weight: 600; font-size: 15px; }
+.m-card .code { font-variant-numeric: tabular-nums; }
+.m-k { font-size: 13px; font-weight: 700; color: var(--muted); margin: 12px 0 2px; letter-spacing: .5px; }
+.m-card p { margin: 0; }
+.m-card ol { margin: 4px 0 0; padding-left: 24px; }
+.m-card li { margin: 4px 0; }
+.m-card li.warn { color: var(--danger); font-weight: 600; }
+.m-card.flash { outline: 3px solid var(--accent); outline-offset: 2px; transition: outline-color 1s; }
+.m-tag { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--danger) 15%, transparent); color: var(--danger); }
+.m-rule { display: flex; gap: 10px; }
+.m-rule + .m-rule { margin-top: 12px; }
+.m-rule .n { flex: none; width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: #fff; display: grid; place-items: center; font-weight: 700; font-size: 15px; }
+.kbd { display: inline-block; padding: 0 6px; border-radius: 6px; background: var(--danger); color: #fff; font-weight: 700; font-size: 14px; }
+.ask textarea { width: 100%; border: 1px solid var(--line); border-radius: 12px; background: var(--bg); padding: 12px; min-height: 84px; resize: vertical; outline: none; font-size: 17px; }
+.ask textarea:focus { border-color: var(--accent); }
+.ask .pv { position: relative; width: 96px; height: 96px; border-radius: 12px; overflow: hidden; margin-top: 10px; }
+.ask .pv img { width: 100%; height: 100%; object-fit: cover; }
+.ask .pv button { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; border-radius: 50%; border: 0; background: rgba(0,0,0,.6); color: #fff; font-size: 16px; line-height: 1; }
+.calls { display: grid; gap: 10px; }
+.calls a { display: flex; align-items: center; justify-content: center; gap: 8px; text-decoration: none; }
+
+/* 驗血報告 */
+.lab-tbl { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 15px; }
+.lab-tbl th, .lab-tbl td { padding: 8px 4px; border-bottom: 1px solid var(--line); text-align: right; }
+.lab-tbl th:first-child, .lab-tbl td:first-child { text-align: left; }
+.lab-tbl thead th { font-size: 13px; color: var(--muted); font-weight: 700; }
+.lab-tbl td .u { display: block; font-size: 11px; color: var(--muted); }
+.lab-tbl .chg { font-size: 13px; font-weight: 700; white-space: nowrap; }
+.lab-tbl .chg.up { color: var(--danger); }
+.lab-tbl .chg.down { color: var(--bp-dia); }
+.lab-tbl tr.grp td { font-size: 12px; font-weight: 800; color: var(--accent); padding-top: 14px; border-bottom: 0; }
+.lab-item { display: flex; align-items: center; gap: 8px; padding: 0 14px; min-height: 50px; }
+.lab-item + .lab-item { border-top: 1px solid var(--line); }
+.lab-item .nm { flex: 1; min-width: 0; }
+.lab-item .nm small { color: var(--muted); font-size: 12px; margin-left: 4px; }
+.lab-item input { width: 90px; text-align: right; border: 0; background: transparent; font-size: 17px; outline: none; padding: 10px 0; font-variant-numeric: tabular-nums; }
+.lab-item input.filled { color: var(--accent); font-weight: 700; }
+.lab-item .unit { width: 58px; font-size: 12px; color: var(--muted); }
+.ocr-bar { height: 8px; background: var(--line); border-radius: 999px; overflow: hidden; margin-top: 8px; }
+.ocr-bar div { height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+details.raw summary { cursor: pointer; color: var(--accent); font-weight: 600; font-size: 15px; padding: 6px 0; }
+details.raw pre { white-space: pre-wrap; font-size: 13px; background: var(--bg); padding: 10px; border-radius: 10px; max-height: 240px; overflow: auto; margin: 6px 0 0; }
+
+/* 身心障礙證明 */
+.docs { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.doc-slot {
+  border: 0; border-radius: 14px; padding: 0; background: var(--bg); overflow: hidden; text-align: center;
+  display: flex; flex-direction: column; min-height: 132px;
+}
+.doc-slot .thumb { flex: 1; min-height: 96px; background: #000 center/cover no-repeat; }
+.doc-slot.empty { border: 2px dashed var(--line); background: transparent; color: var(--accent); justify-content: center; align-items: center; gap: 4px; padding: 10px; }
+.doc-slot.empty .plus { font-size: 28px; line-height: 1; }
+.doc-slot .cap { font-size: 14px; font-weight: 700; padding: 8px 6px; line-height: 1.3; }
+.doc-slot .cap small { display: block; font-weight: 500; color: var(--muted); font-size: 12px; }
+.docview {
+  position: fixed; inset: 0; z-index: 45; background: #000; display: none; flex-direction: column;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+.docview.open { display: flex; }
+.dv-bar { display: flex; align-items: center; gap: 12px; padding: 10px 12px; }
+.dv-home { border: 0; border-radius: 999px; background: #fff; color: #111; font-weight: 800; font-size: 18px; padding: 12px 20px; min-height: 50px; }
+.dv-title { color: #ccd; font-size: 15px; font-weight: 600; flex: 1; text-align: right; }
+.dv-img { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; padding: 4px; }
+.dv-img img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.dv-foot { display: flex; gap: 8px; padding: 10px 12px 14px; }
+.dv-foot button { flex: 1; border: 0; border-radius: 12px; min-height: 46px; font-weight: 600; background: #2a2f35; color: #fff; font-size: 16px; }
+.dv-foot .del { color: #ff7b7f; }
+
 /* 照片 */
 .photos { display: grid; grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 8px; padding: 12px 14px; }
 .photos .ph { aspect-ratio: 1; border-radius: 10px; overflow: hidden; border: 0; padding: 0; background: var(--line); }
@@ -267,6 +340,7 @@ nav.tabs button.active { color: var(--accent); }
   <!-- 紀錄 -->
   <section class="view active" id="view-records">
     <div id="profile"></div>
+    <div id="docs"></div>
     <div id="upcoming"></div>
     <div id="recordList"></div>
   </section>
@@ -287,6 +361,14 @@ nav.tabs button.active { color: var(--accent); }
   </section>
 
   <!-- 備份 -->
+  <section class="view" id="view-labs">
+    <div id="labs"></div>
+  </section>
+
+  <section class="view" id="view-machine">
+    <div id="machine"></div>
+  </section>
+
   <section class="view" id="view-backup">
     <div id="installTip"></div>
     <div class="card">
@@ -327,9 +409,17 @@ nav.tabs button.active { color: var(--accent); }
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V4M4 20h16"/><path d="M7 15l4-5 3 3 5-7"/></svg>
     分析
   </button>
+  <button data-tab="labs">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6.5L5.5 18A2 2 0 0 0 7.3 21h9.4a2 2 0 0 0 1.8-3L14 9.5V3"/><path d="M7.5 15h9"/></svg>
+    驗血
+  </button>
   <button data-tab="reminders">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 16V11a6 6 0 1 1 12 0v5l2 2H4z"/><path d="M10 21h4"/></svg>
     提醒
+  </button>
+  <button data-tab="machine">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><rect x="6" y="9" width="7" height="4" rx="1"/><circle cx="17" cy="11" r="1.5"/><path d="M8 3h8"/></svg>
+    機台
   </button>
   <button data-tab="backup">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5"/><path d="M5 19h14"/></svg>
@@ -347,6 +437,19 @@ nav.tabs button.active { color: var(--accent); }
     <div class="sheet-body" id="sheetBody"></div>
   </div>
 </div>
+
+<div class="docview" id="docview">
+  <div class="dv-bar">
+    <button class="dv-home" id="dvHome">✕ 返回主畫面</button>
+    <span class="dv-title" id="dvTitle"></span>
+  </div>
+  <div class="dv-img"><img id="dvImg" alt="證明照片"></div>
+  <div class="dv-foot">
+    <button id="dvChange">更換照片</button>
+    <button id="dvDel" class="del">刪除</button>
+  </div>
+</div>
+<input type="file" id="docInput" accept="image/*" hidden>
 
 <div class="viewer" id="viewer">
   <div class="vdate" id="viewerInfo"></div>
@@ -376,6 +479,7 @@ const KINDS = {
 };
 
 let db = load();
+if (!Array.isArray(db.labs)) db.labs = [];
 
 function load() {
   try {
@@ -426,21 +530,22 @@ function toast(msg) {
 }
 
 /* ============ 分頁 ============ */
-const TITLES = { records: '每日紀錄', analysis: '每月分析', reminders: '提醒', backup: '備份與設定' };
+const TITLES = { records: '每日紀錄', analysis: '每月分析', reminders: '提醒', machine: '機台問題', labs: '驗血報告', backup: '備份與設定' };
 let currentTab = 'records';
 function showTab(tab) {
   currentTab = tab;
   document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   document.querySelectorAll('.view').forEach(v => v.classList.toggle('active', v.id === 'view-' + tab));
   $('#pageTitle').textContent = TITLES[tab];
-  $('#addBtn').style.visibility = (tab === 'records' || tab === 'reminders') ? 'visible' : 'hidden';
-  $('#addBtn').setAttribute('aria-label', tab === 'reminders' ? '新增提醒' : '新增紀錄');
+  $('#addBtn').style.visibility = (tab === 'records' || tab === 'reminders' || tab === 'labs') ? 'visible' : 'hidden';
+  $('#addBtn').setAttribute('aria-label', tab === 'reminders' ? '新增提醒' : tab === 'labs' ? '新增驗血報告' : '新增紀錄');
   render();
   window.scrollTo(0, 0);
 }
 document.querySelectorAll('nav.tabs button').forEach(b => b.addEventListener('click', () => showTab(b.dataset.tab)));
 $('#addBtn').addEventListener('click', () => {
   if (currentTab === 'reminders') return openReminder(null, 'clinic');
+  if (currentTab === 'labs') return openLab(null);
   const t = db.records.find(r => r.date === today());
   openRecord(t || null);
 });
@@ -450,9 +555,18 @@ function render() {
   if (currentTab === 'analysis') renderAnalysis();
   if (currentTab === 'reminders') renderReminders();
   if (currentTab === 'backup') renderBackup();
+  if (currentTab === 'machine') renderMachine();
+  if (currentTab === 'labs') renderLabs();
 }
 
 /* ============ 紀錄頁 ============ */
+// 分機：主號碼後加逗號（撥通後自動等待再撥分機）
+function telHref(phone) {
+  const parts = String(phone || '').split(/分機|轉|ext\.?|#/i);
+  const digits = x => x.replace(/[^\d+]/g, '');
+  return digits(parts[0]) + (parts[1] && digits(parts[1]) ? ',' + digits(parts[1]) : '');
+}
+
 function renderProfile() {
   const p = db.profile || {};
   const box = $('#profile');
@@ -462,10 +576,7 @@ function renderProfile() {
       <span style="flex:1"><b>設定醫院與緊急聯絡電話</b><br><span class="muted small">填入主治醫院、醫師與電話，需要時一鍵撥打</span></span>
       <span style="color:var(--accent);font-size:22px">›</span></button>`;
   } else {
-    // 分機：主號碼後加逗號（撥通後自動等待再撥分機）
-    const parts = String(p.phone || '').split(/分機|轉|ext\.?|#/i);
-    const digits = s => s.replace(/[^\d+]/g, '');
-    const tel = digits(parts[0]) + (parts[1] && digits(parts[1]) ? ',' + digits(parts[1]) : '');
+    const tel = telHref(p.phone);
     box.innerHTML = `<div class="card">
       <div style="display:flex;align-items:flex-start;gap:10px">
         <span style="font-size:26px;line-height:1.2">🏥</span>
@@ -489,16 +600,19 @@ function openProfile() {
       <div class="line"><span>醫院</span><input type="text" id="p-hosp" placeholder="例如：○○醫院 腹膜透析室" value="${esc(p.hospital || '')}" style="text-align:right;flex:2"></div>
       <div class="line"><span>主治醫師</span><input type="text" id="p-doc" placeholder="例如：王○○ 醫師" value="${esc(p.doctor || '')}" style="text-align:right;flex:2"></div>
       <div class="line"><span>緊急聯絡電話</span><input type="tel" id="p-tel" inputmode="tel" placeholder="例如：02-1234-5678" value="${esc(p.phone || '')}" style="text-align:right;flex:2"></div>
+      <div class="line"><span>機台報修電話</span><input type="tel" id="p-repair" inputmode="tel" placeholder="百特客服或護理專線" value="${esc(p.repair || '')}" style="text-align:right;flex:2"></div>
     </div>
-    <p class="hint">建議填透析室或醫院 24 小時可聯絡的電話。填好後在首頁點一下就能直接撥打。</p></div>
+    <p class="hint">建議填透析室或醫院 24 小時可聯絡的電話。填好後在首頁點一下就能直接撥打；機台報修電話會顯示在「機台」頁。</p></div>
   `, () => {
-    db.profile = { hospital: $('#p-hosp').value.trim(), doctor: $('#p-doc').value.trim(), phone: $('#p-tel').value.trim() };
+    db.profile = { hospital: $('#p-hosp').value.trim(), doctor: $('#p-doc').value.trim(), phone: $('#p-tel').value.trim(), repair: $('#p-repair').value.trim() };
     save(); toast('已儲存');
+    if (currentTab === 'machine') setTimeout(renderMachine, 0);
   });
 }
 
 function renderRecords() {
   renderProfile();
+  renderDocs();
   renderUpcoming();
   const list = $('#recordList');
   const recs = [...db.records].sort((a, b) => b.date.localeCompare(a.date));
@@ -1108,6 +1222,597 @@ function addToCalendar(rems) {
   });
 }
 
+/* ============ 驗血報告 ============ */
+const LAB_ITEMS = [
+  { g: '腎功能', k: 'bun', n: '尿素氮', e: 'BUN', u: 'mg/dL', re: /\bBUN\b|尿素氮/i },
+  { g: '腎功能', k: 'cr', n: '肌酸酐', e: 'Cr', u: 'mg/dL', re: /Creatinine|\bCREA?\b|\bCr\b|肌酸酐|肌酐/i },
+  { g: '腎功能', k: 'ua', n: '尿酸', e: 'UA', u: 'mg/dL', re: /Uric\s*acid|\bUA\b|尿酸/i },
+  { g: '腎功能', k: 'ktv', n: '透析清除率', e: 'Kt/V', u: '', re: /Kt\s*\/\s*V/i },
+  { g: '電解質', k: 'na', n: '鈉', e: 'Na', u: 'mmol/L', re: /Sodium|\bNa\b|鈉/i },
+  { g: '電解質', k: 'k', n: '鉀', e: 'K', u: 'mmol/L', re: /Potassium|\bK\b|鉀/i },
+  { g: '電解質', k: 'ca', n: '鈣', e: 'Ca', u: 'mg/dL', re: /Calcium|\bCa\b|鈣/i },
+  { g: '電解質', k: 'p', n: '磷', e: 'P', u: 'mg/dL', re: /Phosph\w*|\bI?P\b|磷/i },
+  { g: '電解質', k: 'ipth', n: '副甲狀腺素', e: 'iPTH', u: 'pg/mL', re: /i-?PTH|\bPTH\b|副甲狀腺/i },
+  { g: '營養與貧血', k: 'alb', n: '白蛋白', e: 'Alb', u: 'g/dL', re: /Albumin|\bALB\b|白蛋白/i },
+  { g: '營養與貧血', k: 'hb', n: '血色素', e: 'Hb', u: 'g/dL', re: /Ha?emoglobin|\bHb\b|\bHGB\b|血色素|血紅素/i, ex: /A1c|糖化/i },
+  { g: '營養與貧血', k: 'hct', n: '血球容積比', e: 'Hct', u: '%', re: /Hematocrit|\bHct\b|血比容|血球容積/i },
+  { g: '營養與貧血', k: 'fer', n: '鐵蛋白', e: 'Ferritin', u: 'ng/mL', re: /Ferritin|鐵蛋白/i },
+  { g: '營養與貧血', k: 'tsat', n: '運鐵蛋白飽和度', e: 'TSAT', u: '%', re: /TSAT|Transferrin\s*sat\w*|飽和度/i },
+  { g: '血糖與血脂', k: 'glu', n: '飯前血糖', e: 'Glu', u: 'mg/dL', re: /Glucose|\bGlu\b|血糖/i, ex: /A1c|糖化/i },
+  { g: '血糖與血脂', k: 'hba1c', n: '糖化血色素', e: 'HbA1c', u: '%', re: /HbA1c|\bA1C\b|糖化血色素/i },
+  { g: '血糖與血脂', k: 'chol', n: '總膽固醇', e: 'Chol', u: 'mg/dL', re: /Cholesterol|\bT-?CHOL?\b|\bCHOL\b|膽固醇/i, ex: /LDL|HDL/i },
+  { g: '血糖與血脂', k: 'tg', n: '三酸甘油脂', e: 'TG', u: 'mg/dL', re: /Triglyceride\w*|\bTG\b|三酸甘油/i },
+  { g: '其他', k: 'alt', n: '肝功能', e: 'GPT/ALT', u: 'U/L', re: /\bS?GPT\b|\bALT\b/i },
+  { g: '其他', k: 'crp', n: 'C反應蛋白', e: 'CRP', u: 'mg/dL', re: /\bCRP\b|C反應蛋白/i }
+];
+const TESSERACT_URL = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+let ocrWorker = null;
+
+function normalizeOcr(t) {
+  return String(t)
+    .replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+    .replace(/[Ａ-Ｚａ-ｚ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+    .replace(/[／]/g, '/').replace(/[（]/g, '(').replace(/[）]/g, ')')
+    .replace(/(\d)\s*[．。·]\s*(\d)/g, '$1.$2')
+    .replace(/([㐀-鿿])[ \t]+(?=[㐀-鿿])/g, '$1');
+}
+function parseLabText(text) {
+  const values = {};
+  const lines = normalizeOcr(text).split(/\r?\n/);
+  for (const line of lines) {
+    for (const it of LAB_ITEMS) {
+      if (values[it.k] !== undefined) continue;
+      if (it.ex && it.ex.test(line)) continue;
+      const m = it.re.exec(line);
+      if (!m) continue;
+      const rest = line.slice(m.index + m[0].length);
+      const nm = rest.match(/(?:^|[^\d.\-])(\d{1,3}(?:,\d{3})+(?!\d)|\d+(?:\.\d+)?)/);
+      if (!nm) continue;
+      const v = Number(nm[1].replace(/,/g, ''));
+      if (Number.isFinite(v)) values[it.k] = v;
+    }
+  }
+  // 報告日期（西元或民國）
+  let date = null;
+  const dm = normalizeOcr(text).match(/(20\d{2}|1[01]\d)\s*[\/\-.年]\s*(\d{1,2})\s*[\/\-.月]\s*(\d{1,2})/);
+  if (dm) {
+    let y = Number(dm[1]); if (y < 1911) y += 1911;
+    const mo = Number(dm[2]), d = Number(dm[3]);
+    if (mo >= 1 && mo <= 12 && d >= 1 && d <= 31) date = `${y}-${pad(mo)}-${pad(d)}`;
+  }
+  return { values, date };
+}
+
+function loadScript(src) {
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = () => rej(new Error('load'));
+    document.head.appendChild(s);
+  });
+}
+async function ocrImage(blob, onProgress) {
+  if (!window.Tesseract) await loadScript(TESSERACT_URL);
+  if (!ocrWorker) {
+    ocrWorker = await Tesseract.createWorker(['chi_tra', 'eng'], 1, {
+      logger: m => {
+        if (m.status === 'recognizing text') onProgress('辨識文字中', m.progress);
+        else if (/load|initializ/i.test(m.status)) onProgress('第一次使用：下載辨識資料中', m.progress || 0);
+      }
+    });
+  }
+  const { data } = await ocrWorker.recognize(blob);
+  return data.text || '';
+}
+
+const ym = s => s.slice(0, 7);
+const ymLabel = s => `${Number(s.slice(0, 4))}年${Number(s.slice(5, 7))}月`;
+const ymShort = s => `${Number(s.slice(2, 4))}/${Number(s.slice(5, 7))}月`;
+let labEndMonth = null;
+
+function labWindow() {
+  const months = [...new Set(db.labs.map(l => ym(l.date)))].sort();
+  if (!months.length) return { months: [], win: [] };
+  const end = labEndMonth && months.includes(labEndMonth) ? labEndMonth : months[months.length - 1];
+  const i = months.indexOf(end);
+  return { months, end, win: months.slice(Math.max(0, i - 2), i + 1) };
+}
+const labOf = m => db.labs.find(l => ym(l.date) === m);
+const lv = (l, k) => l && l.values && l.values[k] !== undefined && l.values[k] !== null ? l.values[k] : null;
+
+function renderLabs() {
+  const box = $('#labs');
+  const labs = [...db.labs].sort((a, b) => b.date.localeCompare(a.date));
+  let h = '';
+  if (!labs.length) {
+    box.innerHTML = `<div class="empty"><div class="big">🧪</div><p>還沒有驗血報告<br>點右上角 ＋ 拍下本月的報告</p></div>
+      <div class="info small">🔒 報告照片與數值只存在您自己的手機裡，不會上傳到網路。</div>`;
+    return;
+  }
+  const { months, end, win } = labWindow();
+  h += `<div class="card"><h2>📊 近三個月數值變化</h2>
+    <div class="row" style="align-items:center;margin-bottom:6px"><span class="small muted" style="flex:none">截至</span>
+      <select id="labEnd" class="btn sm" style="flex:1;text-align:left">${[...months].reverse().map(m => `<option value="${m}" ${m === end ? 'selected' : ''}>${ymLabel(m)}</option>`).join('')}</select></div>
+    <div style="overflow-x:auto"><table class="lab-tbl"><thead><tr><th>項目</th>${win.map(m => `<th>${ymShort(m)}</th>`).join('')}<th>變化</th></tr></thead><tbody>`;
+  let lastG = '', rows = 0;
+  for (const it of LAB_ITEMS) {
+    const vals = win.map(m => lv(labOf(m), it.k));
+    if (vals.every(v => v === null)) continue;
+    if (it.g !== lastG) { h += `<tr class="grp"><td colspan="${win.length + 2}">${it.g}</td></tr>`; lastG = it.g; }
+    const a = vals[vals.length - 1], b = vals.length > 1 ? vals[vals.length - 2] : null;
+    let chg = '<span class="muted">—</span>';
+    if (a !== null && b !== null) {
+      const d = Math.round((a - b) * 100) / 100;
+      chg = d === 0 ? '<span class="chg">持平</span>' : `<span class="chg ${d > 0 ? 'up' : 'down'}">${d > 0 ? '▲' : '▼'} ${fmt(Math.abs(d), 2)}</span>`;
+    }
+    h += `<tr><td><b>${it.n}</b><span class="u">${it.e}${it.u ? '・' + it.u : ''}</span></td>${vals.map(v => `<td>${v === null ? '<span class="muted">—</span>' : fmt(v, 2)}</td>`).join('')}<td>${chg}</td></tr>`;
+    rows++;
+  }
+  h += `</tbody></table></div>
+    ${rows ? '' : '<p class="muted small">這段期間還沒有數值。</p>'}
+    <p class="hint">「變化」為最近一個月與前一個月的差。各醫院參考值不同，數值高低請依醫師判讀。</p>
+    <div class="row" style="margin-top:10px"><button class="btn" id="labCsv3">匯出這三個月</button><button class="btn" id="labCsvAll">匯出全部</button></div>
+  </div>`;
+
+  h += `<div class="month-label">每月報告</div>`;
+  for (const l of labs) {
+    const n = LAB_ITEMS.filter(it => lv(l, it.k) !== null).length;
+    h += `<button class="rec" data-lab="${l.id}"><div class="d">${ymLabel(ym(l.date))}</div>
+      <div class="muted small">驗血日 ${Number(l.date.slice(5, 7))}/${Number(l.date.slice(8))}・${n} 項數值${l.photos && l.photos.length ? `・📷 ${l.photos.length} 張` : ''}${l.note ? '・' + esc(l.note) : ''}</div></button>`;
+  }
+  h += `<p class="muted small" style="text-align:center">🔒 報告照片與數值只存在您自己的手機裡，不會上傳到網路。<br>請記得到「備份」頁匯出備份檔。</p>`;
+  box.innerHTML = h;
+  $('#labEnd').addEventListener('change', e => { labEndMonth = e.target.value; renderLabs(); });
+  box.querySelectorAll('[data-lab]').forEach(b => b.addEventListener('click', () => openLab(db.labs.find(l => l.id === b.dataset.lab))));
+  $('#labCsv3').addEventListener('click', () => exportLabCsv(win, `驗血近三個月-${end}`));
+  $('#labCsvAll').addEventListener('click', () => exportLabCsv(months, `驗血全部-${today()}`));
+}
+
+function exportLabCsv(months, name) {
+  const rows = [['項目', '英文', '單位', ...months.map(ymLabel)]];
+  rows.push(['驗血日期', '', '', ...months.map(m => (labOf(m) || {}).date || '')]);
+  for (const it of LAB_ITEMS) {
+    const vals = months.map(m => lv(labOf(m), it.k));
+    if (vals.every(v => v === null)) continue;
+    rows.push([it.n, it.e, it.u, ...vals.map(v => v === null ? '' : v)]);
+  }
+  rows.push(['備註', '', '', ...months.map(m => (labOf(m) || {}).note || '')]);
+  const csv = '﻿' + rows.map(r => r.map(c => /[",\n]/.test(String(c)) ? `"${String(c).replace(/"/g, '""')}"` : c).join(',')).join('\r\n');
+  shareFile(csv, `${name}.csv`, 'text/csv');
+}
+
+function openLab(lab) {
+  const l = lab || { id: null, date: today(), values: {}, note: '', photos: [] };
+  const vals = { ...(l.values || {}) };
+  const photos = [];
+  let groups = '', lastG = '';
+  for (const it of LAB_ITEMS) {
+    if (it.g !== lastG) { if (lastG) groups += '</div></div>'; groups += `<div class="field"><span class="label">${it.g}</span><div class="group">`; lastG = it.g; }
+    groups += `<div class="lab-item"><span class="nm">${it.n}<small>${it.e}</small></span>
+      <input type="text" inputmode="decimal" data-k="${it.k}" value="${vals[it.k] ?? ''}" placeholder="—"><span class="unit">${it.u}</span></div>`;
+  }
+  groups += '</div></div>';
+
+  const ocrDone = new Set(l.ocrDone || []);   // 已辨識過的頁面
+  let pasteCount = 0;
+  const log = [];                              // 每頁的辨識結果
+  const rawPages = [];
+
+  openSheet(lab ? '編輯驗血報告' : '新增驗血報告', `
+    <div class="field"><div class="group"><div class="line"><span>驗血日期</span><input type="date" id="lab-date" value="${l.date}" max="${today()}"></div></div>
+      <p class="hint">依驗血日期歸到該月份，每個月一份報告。報告有好幾張時，全部加在這一份裡。</p></div>
+
+    <div class="field"><span class="label">報告照片（可以多張）</span>
+      <div class="group"><div class="photos" id="lab-photos"></div></div>
+      <p class="hint">每一張報告拍一張照片，依序加入；從相簿可一次選多張。</p>
+      <div class="list-btns" style="margin-top:10px">
+        <button class="btn primary block" id="lab-ocr">🔍 辨識照片中的數值</button>
+        <button class="btn block" id="lab-paste-btn">📋 改用貼上文字</button>
+      </div>
+      <div id="lab-paste" style="display:none;margin-top:10px">
+        <div class="info small">用手機內建功能複製報告文字，<b>一次貼一張</b>，每貼一張按一次「填入」：<br>
+          ${isAndroid ? '安卓：在相簿開啟報告照片 →「Google 智慧鏡頭」→「文字」→ 全選 →「複製」' : 'iPhone：在「照片」開啟報告 → 按右下角「原況文字」圖示 → 長按文字「全選」→「拷貝」'}</div>
+        <textarea id="lab-paste-text" style="width:100%;min-height:110px;margin-top:8px;border:1px solid var(--line);border-radius:12px;background:var(--card);padding:10px;font-size:15px" placeholder="在這裡長按「貼上」第 1 張報告的文字"></textarea>
+        <button class="btn primary block" id="lab-paste-go" style="margin-top:8px">填入第 1 張的數值</button>
+      </div>
+      <div id="lab-ocr-status"></div>
+      <p class="hint">🔒 辨識在您的手機上進行，照片不會上傳。辨識可能有誤，請對照報告確認下方數值。</p>
+    </div>
+
+    <div class="info small" id="lab-count" style="margin-bottom:14px"></div>
+    ${groups}
+
+    <div class="field"><span class="label">備註</span>
+      <div class="group" style="padding:0 14px"><textarea id="lab-note" placeholder="例如：醫師提醒、其他檢驗項目">${esc(l.note || '')}</textarea></div></div>
+    ${lab ? '<button class="btn danger block" id="lab-del">刪除這份報告</button>' : ''}
+  `, () => {
+    const date = $('#lab-date').value || today();
+    const values = {};
+    $('#sheetBody').querySelectorAll('.lab-item input').forEach(inp => { const v = num(inp.value); if (v !== null) values[inp.dataset.k] = v; });
+    const note = $('#lab-note').value.trim();
+    if (!Object.keys(values).length && !photos.length && !note) { toast('請至少填一個數值或加入照片'); return false; }
+    const out = { id: l.id || uid(), date, values, note, photos: photos.map(p => p.id), ocrDone: photos.map(p => p.id).filter(id => ocrDone.has(id)) };
+    const dup = db.labs.find(x => ym(x.date) === ym(date) && x.id !== out.id);
+    if (dup) {
+      if (!confirm(`${ymLabel(ym(date))}已經有一份報告（${(dup.photos || []).length} 張照片），要把這次的報告合併進去嗎？\n（相同項目以這次填的數值為準）`)) return false;
+      out.values = { ...dup.values, ...values };
+      out.photos = [...(dup.photos || []), ...out.photos];
+      out.ocrDone = [...(dup.ocrDone || []), ...out.ocrDone];
+      out.note = [dup.note, note].filter(Boolean).join('；');
+      db.labs = db.labs.filter(x => x !== dup);
+    }
+    const removed = (l.photos || []).filter(id => !out.photos.includes(id));
+    Promise.all([
+      ...photos.filter(p => p.isNew).map(p => idb.put({ id: p.id, blob: p.blob, thumb: p.thumb, date })),
+      ...removed.map(id => idb.del(id))
+    ]).catch(() => alert('照片儲存失敗，手機空間可能不足。'));
+    const i = db.labs.findIndex(x => x.id === out.id);
+    if (i >= 0) db.labs[i] = out; else db.labs.push(out);
+    labEndMonth = null;
+    save(); toast('已儲存');
+  });
+
+  const inputs = () => [...$('#sheetBody').querySelectorAll('.lab-item input')];
+  const markFilled = () => {
+    let n = 0;
+    inputs().forEach(i => { const f = i.value.trim() !== ''; i.classList.toggle('filled', f); if (f) n++; });
+    $('#lab-count').innerHTML = `目前已填 <b>${n}</b> / ${LAB_ITEMS.length} 項${photos.length ? `・報告照片 ${photos.length} 張` : ''}`;
+  };
+  inputs().forEach(i => i.addEventListener('input', markFilled));
+
+  const drawLog = () => {
+    const st = $('#lab-ocr-status'); if (!st) return;
+    if (!log.length) { st.innerHTML = ''; return; }
+    st.innerHTML = `<div class="info small" style="margin-top:10px">${log.map(x => `<div style="margin:4px 0">${x.html}</div>`).join('')}
+      <div style="margin-top:6px">請對照報告逐項確認下方數值。</div></div>
+      ${rawPages.length ? `<details class="raw"><summary>查看辨識出的文字</summary><pre>${rawPages.map(r => `【${r.label}】\n${esc(r.text) || '（沒有辨識到文字）'}`).join('\n\n')}</pre></details>` : ''}`;
+    st.querySelectorAll('[data-fix]').forEach(b => b.addEventListener('click', () => {
+      const inp = $(`#sheetBody .lab-item input[data-k="${b.dataset.fix}"]`);
+      inp.value = b.dataset.v; markFilled(); b.replaceWith(document.createTextNode('（已改用）'));
+    }));
+  };
+  // 解析一張報告的文字：只填空白欄；與已填數值不同時列出讓病友選
+  const applyParsed = (text, label) => {
+    const { values, date } = parseLabText(text);
+    let n = 0; const conflicts = [];
+    for (const [k, v] of Object.entries(values)) {
+      const inp = $(`#sheetBody .lab-item input[data-k="${k}"]`);
+      if (!inp) continue;
+      const cur = num(inp.value);
+      if (cur === null) { inp.value = fmt(v, 2); n++; }
+      else if (Math.abs(cur - v) > 1e-9) conflicts.push({ k, v, cur });
+    }
+    if (date && !lab && date <= today() && !log.some(x => x.date)) $('#lab-date').value = date;
+    rawPages.push({ label, text });
+    let html = `${n ? '✅' : '⚪'} <b>${label}</b>：填入 ${n} 項${date ? `（報告日期 ${date}）` : ''}${!n && !conflicts.length ? '，沒有找到可對應的項目' : ''}`;
+    for (const c of conflicts) {
+      const it = LAB_ITEMS.find(x => x.k === c.k);
+      html += `<br>⚠️ ${it.n}：這張是 <b>${fmt(c.v, 2)}</b>，已填 ${fmt(c.cur, 2)} <button class="btn sm" data-fix="${c.k}" data-v="${fmt(c.v, 2)}" style="min-height:30px;padding:2px 10px">改用 ${fmt(c.v, 2)}</button>`;
+    }
+    log.push({ html, date });
+    markFilled(); drawLog();
+    return n;
+  };
+
+  const refreshOcrBtn = () => {
+    const btn = $('#lab-ocr'); if (!btn) return;
+    const todo = photos.filter(p => !ocrDone.has(p.id)).length;
+    btn.textContent = !photos.length ? '🔍 辨識照片中的數值' : todo ? `🔍 辨識 ${todo} 張新照片中的數值` : `🔁 重新辨識全部 ${photos.length} 張`;
+  };
+  const drawPhotos = () => {
+    const box = $('#lab-photos'); if (!box) return;
+    box.innerHTML = photos.map((p, i) => `<button type="button" class="ph" data-i="${i}" style="position:relative"><img src="${p.thumb}" alt="第 ${i + 1} 張">
+        <span style="position:absolute;left:4px;bottom:4px;background:rgba(0,0,0,.65);color:#fff;font-size:12px;font-weight:700;padding:1px 6px;border-radius:6px">第${i + 1}張${ocrDone.has(p.id) ? ' ✓' : ''}</span></button>`).join('') +
+      `<button type="button" class="add" id="lab-addPhoto"><span>＋</span>${photos.length ? `第 ${photos.length + 1} 張` : '拍報告'}</button>`;
+    box.querySelectorAll('.ph').forEach(b => b.addEventListener('click', () => {
+      const p = photos[Number(b.dataset.i)];
+      viewPhoto(p, out => { if (out === 'delete') { photos.splice(photos.indexOf(p), 1); ocrDone.delete(p.id); drawPhotos(); } });
+    }));
+    $('#lab-addPhoto').addEventListener('click', () => {
+      const inp = $('#photoInput');
+      inp.onchange = async () => {
+        const files = [...inp.files]; inp.value = '';
+        if (!files.length) return;
+        toast(files.length > 1 ? `處理 ${files.length} 張照片中…` : '照片處理中…');
+        for (const f of files) {
+          try {
+            photos.push({ id: uid(), isNew: true, blob: await resizeImage(f, 2400, 0.9), thumb: await blobToDataURL(await resizeImage(f, 240, 0.7)) });
+          } catch (e) { toast('有照片無法讀取'); }
+        }
+        drawPhotos();
+      };
+      inp.click();
+    });
+    refreshOcrBtn(); markFilled();
+  };
+  (async () => {
+    for (const id of l.photos || []) {
+      try { const p = await idb.get(id); if (p) photos.push({ id, isNew: false, thumb: p.thumb }); } catch (e) {}
+    }
+    drawPhotos();
+  })();
+
+  $('#lab-ocr').addEventListener('click', async () => {
+    if (!photos.length) { toast('請先按「＋ 拍報告」加入照片'); return; }
+    let targets = photos.filter(p => !ocrDone.has(p.id));
+    if (!targets.length) {
+      if (!confirm('全部照片都辨識過了，要重新辨識嗎？\n（只會填入目前空白的項目）')) return;
+      targets = [...photos];
+    }
+    if (!window.Tesseract && !ocrWorker) {
+      let first = true; try { first = !localStorage.getItem('ocr-ready'); } catch (e) {}
+      if (first && !confirm('第一次辨識需要下載約 20 MB 的文字辨識資料（建議連上 Wi-Fi），下載後會保存在手機中。\n辨識在手機上進行，照片不會上傳。要繼續嗎？')) return;
+    }
+    const st = $('#lab-ocr-status');
+    const btn = $('#lab-ocr'); btn.disabled = true;
+    try {
+      for (let t = 0; t < targets.length; t++) {
+        const p = targets[t];
+        const page = photos.indexOf(p) + 1;
+        const blob = p.blob || (await idb.get(p.id))?.blob;
+        if (!blob) continue;
+        const text = await ocrImage(blob, (label, pr) => {
+          const done = log.map(x => `<div style="margin:4px 0">${x.html}</div>`).join('');
+          st.innerHTML = `<div class="info small" style="margin-top:10px">${done}<div style="margin:4px 0">${label}：第 ${page} 張（${t + 1}/${targets.length}）… ${Math.round(pr * 100)}%</div>
+            <div class="ocr-bar"><div style="width:${Math.round(pr * 100)}%"></div></div></div>`;
+        });
+        ocrDone.add(p.id);
+        applyParsed(text, `第 ${page} 張照片`);
+        drawPhotos();
+      }
+      try { localStorage.setItem('ocr-ready', '1'); } catch (e) {}
+    } catch (e) {
+      log.push({ html: '⚠️ 照片辨識失敗（可能是網路不通或手機記憶體不足）。請改用「📋 改用貼上文字」，或直接手動輸入。' });
+      drawLog();
+    } finally { btn.disabled = false; refreshOcrBtn(); }
+  });
+  $('#lab-paste-btn').addEventListener('click', () => {
+    const box = $('#lab-paste'); box.style.display = box.style.display === 'none' ? '' : 'none';
+    if (box.style.display === '') $('#lab-paste-text').focus();
+  });
+  $('#lab-paste-go').addEventListener('click', () => {
+    const ta = $('#lab-paste-text');
+    if (!ta.value.trim()) { toast('請先貼上報告文字'); return; }
+    pasteCount++;
+    const n = applyParsed(ta.value, `貼上的第 ${pasteCount} 張`);
+    ta.value = '';
+    ta.placeholder = `在這裡長按「貼上」第 ${pasteCount + 1} 張報告的文字`;
+    $('#lab-paste-go').textContent = `填入第 ${pasteCount + 1} 張的數值`;
+    toast(`第 ${pasteCount} 張填入 ${n} 項，可以接著貼下一張`);
+  });
+  const del = $('#lab-del');
+  if (del) del.addEventListener('click', () => {
+    if (!confirm('確定刪除這份驗血報告？' + (l.photos && l.photos.length ? '\n照片也會一起刪除。' : ''))) return;
+    (l.photos || []).forEach(id => idb.del(id).catch(() => {}));
+    db.labs = db.labs.filter(x => x.id !== l.id);
+    save(); closeSheet(); render(); toast('已刪除');
+  });
+  markFilled();
+}
+
+/* ============ 身心障礙證明 ============ */
+const DOCS = {
+  front: { name: '身心障礙手冊', sub: '正面', title: '身心障礙手冊（正面）' },
+  en: { name: '英文版', sub: '身心障礙證明', title: '英文版身心障礙證明' }
+};
+let docTarget = null, dvKey = null, dvUrl = null;
+
+function renderDocs() {
+  const d = db.docs || {};
+  $('#docs').innerHTML = `<div class="card"><h2>🪪 身心障礙證明 <span class="muted small" style="font-weight:500">（可不填）</span></h2>
+    <div class="docs">${Object.entries(DOCS).map(([k, v]) => d[k] && d[k].thumb
+      ? `<button class="doc-slot" data-doc="${k}"><div class="thumb" style="background-image:url('${d[k].thumb}')"></div><div class="cap">${v.name}<small>${v.sub}・點我全螢幕</small></div></button>`
+      : `<button class="doc-slot empty" data-doc="${k}"><span class="plus">＋</span><span class="cap">${v.name}<small>${v.sub}・點我加入照片</small></span></button>`).join('')}
+    </div>
+    <p class="hint" style="margin:10px 2px 0">🔒 照片只存在您自己的手機裡，不會上傳到網路。可從相簿選擇或直接拍照；直接拍的照片不會進入手機相簿，請記得到「備份」頁按「<b>匯出備份檔</b>」存檔。</p>
+    </div>`;
+  $('#docs').querySelectorAll('[data-doc]').forEach(b => b.addEventListener('click', () => {
+    const k = b.dataset.doc;
+    if (d[k] && d[k].thumb) openDoc(k); else pickDoc(k);
+  }));
+}
+
+function pickDoc(k) {
+  docTarget = k;
+  $('#docInput').click();
+}
+$('#docInput').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = '';
+  const k = docTarget; docTarget = null;
+  if (!f || !k) return;
+  try {
+    toast('照片處理中…');
+    const blob = await resizeImage(f, 2400, 0.9);        // 保留清晰度方便出示
+    const thumb = await blobToDataURL(await resizeImage(f, 320, 0.7));
+    await idb.put({ id: 'doc-' + k, blob, thumb, date: today() });
+    db.docs = db.docs || {};
+    db.docs[k] = { thumb, at: new Date().toISOString() };
+    save(); renderDocs(); toast('已儲存，記得到「備份」頁匯出備份檔');
+    if ($('#docview').classList.contains('open')) openDoc(k);
+  } catch (err) { alert('照片儲存失敗，請換一張照片或確認手機空間。'); }
+});
+
+async function openDoc(k) {
+  const p = await idb.get('doc-' + k).catch(() => null);
+  if (!p) { toast('找不到照片，請重新選擇'); pickDoc(k); return; }
+  dvKey = k;
+  if (dvUrl) URL.revokeObjectURL(dvUrl);
+  dvUrl = URL.createObjectURL(p.blob);
+  $('#dvImg').src = dvUrl;
+  $('#dvTitle').textContent = DOCS[k].title;
+  $('#docview').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeDoc() {
+  $('#docview').classList.remove('open');
+  document.body.style.overflow = '';
+  if (dvUrl) { URL.revokeObjectURL(dvUrl); dvUrl = null; }
+}
+$('#dvHome').addEventListener('click', () => { closeDoc(); closeViewer(); closeSheet(); showTab('records'); });
+$('#dvChange').addEventListener('click', () => pickDoc(dvKey));
+$('#dvDel').addEventListener('click', async () => {
+  if (!confirm(`確定刪除「${DOCS[dvKey].title}」的照片？`)) return;
+  await idb.del('doc-' + dvKey).catch(() => {});
+  if (db.docs) delete db.docs[dvKey];
+  save(); closeDoc(); renderDocs(); toast('已刪除');
+});
+
+/* ============ 機台問題 ============ */
+const MACHINE = {
+  intro: '百特全自動腹膜透析機（HomeChoice / Claria）在運作時，若遇到異常會發出警訊並在面板上顯示錯誤訊息或代碼。以下為居家透析最常遇到的幾種機器警訊、系統錯誤代碼與建議處理方式。',
+  sections: [
+    {
+      title: '1. 常見狀況警訊（文字提示）',
+      desc: '當出現這類警訊時，機器通常會發出嗶嗶聲並暫停，請<b>先按紅色圓形／六角形鍵（STOP）消音</b>，再依以下方式檢查：',
+      items: [
+        { name: '引流量低', en: 'Low Drain Volume', keys: ['low drain', '引流量低', '引流'],
+          mean: '引流速度太慢，或體內藥水沒引流乾淨。',
+          steps: ['翻身、更換坐／臥姿勢（可能導管壓到）。', '檢查身上管路有無折到或管夾未開。', '檢查是否有便秘問題（會影響引流）。', '檢查是否有纖維蛋白（棉絮物）阻塞。'] },
+        { name: '檢查管路', en: 'Check Line', keys: ['check line', '檢查管路', '管路'],
+          mean: '透析液袋、引流管或病人端管路液流受阻。',
+          steps: ['檢查所有透析液袋的管夾、綠色出口塞是否確實打開。', '檢查管路是否有扭曲、壓迫或折疊。', '檢查藥水袋是否空了。'] }
+      ]
+    },
+    {
+      title: '2. 核心系統錯誤代碼（數字代碼）',
+      desc: '如果面板顯示 <b>SYSTEM ERROR（系統錯誤）加上 4 位數代碼</b>，這通常代表機器偵測到內部硬體異常或管路嚴重錯誤。',
+      items: [
+        { name: '代碼 2240 / 2367', tag: '最常見', keys: ['2240', '2367'],
+          mean: '<b>管匣內有空氣</b>、管匣破損，或是透析液袋連結處有鬆脫漏氣。',
+          steps: ['按<b>紅色鍵（STOP）</b>消音，並抄下代碼與當下的透析階段。', '關掉機器電源，靜待 2–3 分鐘後重新開機。', '若開機後轉為顯示代碼 2367，請再次關機並靜待 2–3 分鐘後開機。',
+                  '如果錯誤依舊無法消除，代表該組管匣已無法使用。請<b>結束本次治療</b>，丟棄原有的管匣與藥水袋，重新更換一組全新管匣與藥水重新開始。',
+                  { warn: true, text: '備註：連結新藥水袋時，請務必確實檢查管夾開關，避免再度跑入空氣。' }] },
+        { name: '代碼 2110 / 2113 / 2117', keys: ['2110', '2113', '2117'],
+          mean: '<b>加熱盤（加溫器）故障</b>，或是機器內部的日期、時間設定錯亂。',
+          steps: ['按<b>紅色鍵（STOP）</b>消音。', '直接關閉機器電源。', '此狀況屬於硬體異常，<b>請勿繼續強行使用</b>。請直接致電您的腹膜透析護理專線或百特公司工程人員報修。'],
+          call: true }
+      ]
+    }
+  ],
+  rules: [
+    ['先消音、再觀察', '聽到警報切勿慌張，先按 <span class="kbd">STOP</span> 鍵消音，並看清面板字樣。'],
+    ['重開機大法', '對於不明的系統錯誤，可嘗試「關機 10 秒 → 重新開機」看能否清除錯誤並繼續透析。'],
+    ['安全斷開', '若機器故障卡死且無法排除，請依照護理師指導的「緊急斷開程序」安全地與機器分離，<b>切勿拉扯導管</b>。']
+  ]
+};
+const AI_PREFIX = '這是腹膜透析機台：百特（Baxter）全自動腹膜透析機（APD Cycler，HomeChoice / Claria）。';
+let askText = '', askPhoto = null, askThumb = null;
+
+function machineCalls() {
+  const p = db.profile || {};
+  const btns = [];
+  if (telHref(p.repair)) btns.push(`<a class="btn primary block" href="tel:${telHref(p.repair)}">🔧 機台報修 ${esc(p.repair)}</a>`);
+  if (telHref(p.phone)) btns.push(`<a class="btn block" href="tel:${telHref(p.phone)}">📞 醫院緊急聯絡 ${esc(p.phone)}</a>`);
+  return btns.length ? `<div class="calls">${btns.join('')}</div>` :
+    `<button class="btn block" data-prof>設定機台報修／緊急聯絡電話</button>`;
+}
+
+function renderMachine() {
+  let h = `<p class="m-intro">${MACHINE.intro}</p>`;
+  h += `<div class="card"><h2>📞 需要協助時</h2>${machineCalls()}</div>`;
+  MACHINE.sections.forEach((sec, si) => {
+    h += `<div class="m-sec">${sec.title}</div><p class="m-desc">${sec.desc}</p>`;
+    sec.items.forEach((it, ii) => {
+      h += `<div class="card m-card" id="m-${si}-${ii}">
+        <h3><span class="code">${si === 1 ? '🛑 ' : '⚠️ '}${it.name}</span>${it.tag ? `<span class="m-tag">${it.tag}</span>` : ''}</h3>
+        ${it.en ? `<div class="en">${it.en}</div>` : ''}
+        <div class="m-k">代表意思</div><p>${it.mean}</p>
+        <div class="m-k">處理方式</div>
+        <ol>${it.steps.map(st => typeof st === 'string' ? `<li>${st}</li>` : `<li class="warn">${st.text}</li>`).join('')}</ol>
+        ${it.call ? `<div style="margin-top:12px">${machineCalls()}</div>` : ''}
+      </div>`;
+    });
+  });
+  h += `<div class="m-sec">💡 居家應變核心原則</div><div class="card">${MACHINE.rules.map((r, i) =>
+    `<div class="m-rule"><span class="n">${i + 1}</span><div><b>${r[0]}：</b>${r[1]}</div></div>`).join('')}</div>`;
+
+  // 找不到代碼
+  h += `<div class="m-sec">🔍 找不到此錯誤代碼？</div>
+  <div class="card ask">
+    <div class="info" style="margin-bottom:12px"><b>請輸入異常代碼</b>，或<b>先拍下面板上異常代碼的照片</b>，我們會幫您上傳 Google 查詢，並自動註明是「百特全自動腹膜透析機（APD Cycler）」。</div>
+    <textarea id="askText" placeholder="請輸入異常代碼，例如：SYSTEM ERROR 4520">${esc(askText)}</textarea>
+    <div id="askHit"></div>
+    <div id="askPv"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="askCam">📷 拍下代碼</button>
+      <button class="btn primary" id="askGo">Google 查詢</button>
+    </div>
+    <input type="file" id="askFile" accept="image/*" hidden>
+    <p class="hint" style="margin-top:10px" id="askHint"></p>
+    <p class="hint" style="margin-top:6px">AI 查詢結果僅供參考，可能不正確。處理前若有疑慮，請先致電護理專線或報修。</p>
+  </div>
+  <p class="muted small" style="text-align:center">內容整理自中華民國腹膜透析腎友協會等公開資料。<br>實際處理方式請以護理師指導及機台說明書為準。</p>`;
+
+  const box = $('#machine');
+  box.innerHTML = h;
+  box.querySelectorAll('[data-prof]').forEach(b => b.addEventListener('click', openProfile));
+  const ta = $('#askText');
+  ta.addEventListener('input', () => { askText = ta.value; checkLocal(); });
+  $('#askCam').addEventListener('click', () => $('#askFile').click());
+  $('#askFile').addEventListener('change', async e => {
+    const f = e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    try {
+      askPhoto = await resizeImage(f, 1600, 0.85);
+      askThumb = await blobToDataURL(await resizeImage(f, 240, 0.7));
+      drawAskPhoto();
+    } catch (err) { toast('無法讀取這張照片'); }
+  });
+  $('#askGo').addEventListener('click', askAI);
+  drawAskPhoto(); checkLocal();
+}
+
+function drawAskPhoto() {
+  const pv = $('#askPv'); if (!pv) return;
+  pv.innerHTML = askThumb ? `<div class="pv"><img src="${askThumb}" alt="面板照片"><button id="askRm" aria-label="移除照片">×</button></div>` : '';
+  const hint = $('#askHint');
+  if (hint) hint.innerHTML = askThumb
+    ? '按「Google 查詢」後，在分享選單選 <b>Google</b> App（也可選 Gemini），照片和查詢說明會一起送出。若說明文字沒出現，在輸入框長按「貼上」即可。'
+    : '';
+  const rm = $('#askRm'); if (rm) rm.addEventListener('click', () => { askPhoto = askThumb = null; drawAskPhoto(); });
+}
+
+function checkLocal() {
+  const t = askText.toLowerCase();
+  let hit = null;
+  MACHINE.sections.forEach((sec, si) => sec.items.forEach((it, ii) => {
+    if (!hit && t.trim() && it.keys.some(k => t.includes(k))) hit = { id: `m-${si}-${ii}`, name: it.name };
+  }));
+  const box = $('#askHit'); if (!box) return;
+  box.innerHTML = hit ? `<button class="btn sm block" id="askJump" style="margin-top:8px">👆 上方已有「${esc(hit.name)}」的說明，點此查看</button>` : '';
+  if (hit) $('#askJump').addEventListener('click', () => {
+    const el = document.getElementById(hit.id);
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.classList.add('flash'); setTimeout(() => el.classList.remove('flash'), 1800);
+  });
+}
+
+function buildPrompt(text, hasPhoto) {
+  text = text.trim();
+  if (hasPhoto) return AI_PREFIX + '請查詢照片中機台面板顯示的故障代碼或訊息的意思與改善方式。' + (text ? `補充說明：${text}` : '');
+  return AI_PREFIX + `請查詢故障代碼與改善方式：${text}`;
+}
+const aiModeUrl = q => 'https://www.google.com/search?udm=50&q=' + encodeURIComponent(q);
+
+function askAI() {
+  const text = ($('#askText').value || '').trim();
+  if (!text && !askPhoto) { toast('請輸入代碼或加入照片'); $('#askText').focus(); return; }
+  const prompt = buildPrompt(text, !!askPhoto);
+  if (!askPhoto) { openExternal(aiModeUrl(prompt)); return; }
+
+  // 方式一：把照片＋查詢說明分享給 Google App（或 Gemini）
+  const file = new File([askPhoto], `透析機異常代碼-${today()}.jpg`, { type: 'image/jpeg' });
+  try { navigator.clipboard.writeText(prompt).catch(() => {}); } catch (e) {}
+  if (navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({ files: [file], text: prompt }).catch(e => {
+      if (e.name === 'AbortError') return;
+      navigator.share({ files: [file] }).catch(() => {});
+    });
+  } else {
+    alert('這個瀏覽器無法分享照片，將改用文字查詢。\n請在 Google 頁面按「＋」或相機圖示自行上傳照片。');
+    openExternal(aiModeUrl(prompt));
+  }
+}
+
 /* ============ 照片儲存（IndexedDB，存在手機本機） ============ */
 const idb = (() => {
   let opening;
@@ -1228,13 +1933,15 @@ function renderBackup() {
 $('#exportJson').addEventListener('click', async () => {
   toast('準備備份檔…');
   const used = new Set(db.records.flatMap(r => r.photos || []));
+  Object.keys(db.docs || {}).forEach(k => used.add('doc-' + k));
+  (db.labs || []).forEach(l => (l.photos || []).forEach(id => used.add(id)));
   const photos = [];
   try {
     for (const p of await idb.all()) {
       if (used.has(p.id)) photos.push({ id: p.id, date: p.date, thumb: p.thumb, data: await blobToDataURL(p.blob) });
     }
   } catch (e) {}
-  const data = JSON.stringify({ app: 'dialysis-tracker', version: 2, exportedAt: new Date().toISOString(), records: db.records, reminders: db.reminders, profile: db.profile || null, photos });
+  const data = JSON.stringify({ app: 'dialysis-tracker', version: 2, exportedAt: new Date().toISOString(), records: db.records, reminders: db.reminders, profile: db.profile || null, docs: db.docs || null, labs: db.labs || [], photos });
   const ok = await shareFile(data, `洗腎紀錄備份-${today()}.json`, 'application/json');
   if (ok) { db.lastBackup = new Date().toISOString(); save(); renderBackup(); toast('備份檔已匯出'); }
 });
@@ -1254,6 +1961,8 @@ $('#importFile').addEventListener('change', async e => {
     }
     db.records = d.records; db.reminders = d.reminders;
     if (d.profile) db.profile = d.profile;
+    db.docs = d.docs || null;
+    db.labs = Array.isArray(d.labs) ? d.labs : [];
     save(); renderBackup(); toast('已還原');
   } catch (err) { alert('無法讀取這個檔案，請確認是本 App 匯出的備份檔。'); }
 });
@@ -1279,7 +1988,7 @@ $('#clearAll').addEventListener('click', () => {
   if (!confirm('確定要清除所有紀錄與提醒嗎？此動作無法復原。')) return;
   if (!confirm('再確認一次：清除前建議先匯出備份。真的要清除嗎？')) return;
   idb.clear().catch(() => {});
-  db = { records: [], reminders: [], profile: null, lastBackup: null }; save(); renderBackup(); toast('已清除');
+  db = { records: [], reminders: [], profile: null, docs: null, labs: [], lastBackup: null }; save(); renderBackup(); toast('已清除');
 });
 
 /* ============ 啟動 ============ */
