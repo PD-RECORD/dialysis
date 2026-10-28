@@ -268,6 +268,7 @@ nav.tabs button.active { color: var(--accent); }
 .lab-item .nm small { color: var(--muted); font-size: 12px; margin-left: 4px; }
 .lab-item input { width: 90px; text-align: right; border: 0; background: transparent; font-size: 17px; outline: none; padding: 10px 0; font-variant-numeric: tabular-nums; }
 .lab-item input.filled { color: var(--accent); font-weight: 700; }
+.lab-item input.check { color: #c26a00; background: color-mix(in srgb, #f0a256 22%, transparent); border-radius: 8px; padding-right: 6px; }
 .lab-item .unit { width: 58px; font-size: 12px; color: var(--muted); }
 .ocr-bar { height: 8px; background: var(--line); border-radius: 999px; overflow: hidden; margin-top: 8px; }
 .ocr-bar div { height: 100%; width: 0; background: var(--accent); transition: width .2s; }
@@ -1290,15 +1291,78 @@ function matchItem(it, text) {
   return it.re.exec(text);
 }
 // 數值字樣（容許結尾的 H/L/* 標記），不含參考值範圍
-function valueToken(t) {
+function valueRaw(t) {
   t = normalizeOcr(t).trim().replace(/[HL*↑↓]+$/i, '').trim();
   const m = t.match(/^[<>]?(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)$/);
-  return m ? Number(m[1].replace(/,/g, '')) : null;
+  return m ? m[1] : null;
 }
+function valueToken(t) {
+  const r = valueRaw(t);
+  return r === null ? null : Number(r.replace(/,/g, ''));
+}
+const refRange = t => {
+  const m = normalizeOcr(t || '').match(/(\d+(?:\.\d+)?)\s*[\-~～]\s*(\d+(?:\.\d+)?)/);
+  if (!m || !(Number(m[2]) > Number(m[1]))) return null;
+  const dec = x => (x.split('.')[1] || '').length;
+  const r = [Number(m[1]), Number(m[2])];
+  r.dec = Math.max(dec(m[1]), dec(m[2]));     // 參考值的小數位數（檢驗結果通常印成相同位數）
+  return r;
+};
+// 回傳 {v, raw, ref}：名稱後的第一個數值，以及同一行的參考值範圍
 const firstNumberAfter = rest => {
   const nm = rest.match(/(?:^|[^\d.\-~])(\d{1,3}(?:,\d{3})+(?!\d)|\d+(?:\.\d+)?)(?![\d.]*\s*[\-~]\s*\d)/);
-  return nm ? Number(nm[1].replace(/,/g, '')) : null;
+  if (!nm) return null;
+  const after = rest.slice(nm.index + nm[0].length);
+  return { v: Number(nm[1].replace(/,/g, '')), raw: nm[1], ref: refRange(after) };
 };
+
+// 各項目的合理數值範圍（用來發現漏掉的小數點，不是正常值）
+const LAB_LIMITS = {
+  bun: [3, 300], cr: [0.2, 40], ua: [1.5, 25], ktv: [0.3, 6], na: [100, 190], k: [1, 10], ca: [3, 20], p: [1, 20],
+  ipth: [1, 5000], alb: [0.5, 7], hb: [2, 25], hct: [5, 75], wbc: [0.3, 60], plt: [5, 1500], fer: [1, 20000],
+  tsat: [1, 100], glu: [20, 1500], hba1c: [3, 20], chol: [30, 800], tg: [10, 5000], alt: [1, 5000], ast: [1, 5000],
+  alkp: [5, 3000], crp: [0, 50]
+};
+// 小數點檢查：超出合理範圍（或差參考值太多）且讀到的數字沒有小數點時，試著補回小數點
+// 各項目沒有參考值可對照時，常見的小數位數
+const REF_DEC_ITEMS = new Set(['k', 'ca', 'p', 'alb', 'hb', 'hct', 'ua', 'wbc', 'hba1c', 'ktv', 'tsat']);
+const LAB_DEC = { bun: 1, cr: 2, ua: 1, ktv: 2, k: 1, ca: 1, p: 1, alb: 1, hb: 1, hct: 1, wbc: 2, hba1c: 1, crp: 2 };
+function fixDecimal(k, v, raw, ref) {
+  const lim = LAB_LIMITS[k];
+  raw = String(raw ?? v);
+  const digits = raw.replace(/,/g, '');
+  const hasDot = raw.includes('.');
+  const ok = x => !lim || (x >= lim[0] && x <= lim[1]);
+  const withDec = d => Number(digits.slice(0, digits.length - d) + '.' + digits.slice(-d));
+  if (hasDot) return ok(v) ? { v } : { v, check: true };
+  // 1) 參考值有小數（例如 3.4-4.8），結果卻沒有 → 依參考值的小數位數補回
+  //    只用在數值通常落在參考值附近的項目（尿素氮、肌酸酐、鐵蛋白等洗腎時常遠高於參考值，不適用）
+  if (ref && ref.dec > 0 && REF_DEC_ITEMS.has(k) && digits.length > ref.dec) {
+    const c = withDec(ref.dec);
+    if (ok(c)) return c === v ? { v } : { v: c, fixed: true, from: raw };
+  }
+  // 2) 「03」這種開頭為 0 的數字 → 0.3
+  if (/^0\d/.test(digits)) { const c = Number('0.' + digits.slice(1)); if (ok(c)) return { v: c, fixed: true, from: raw }; }
+  if (ok(v)) {
+    if (ref && (k === 'bun' || k === 'cr') && v > ref[1] * 8) return { v, check: true };
+    return { v };
+  }
+  // 3) 超出合理範圍 → 先試這項常見的小數位數，再依序試 1～3 位
+  const tries = [LAB_DEC[k], 1, 2, 3].filter((d, i, a) => d && a.indexOf(d) === i && digits.length > d);
+  for (const d of tries) { const c = withDec(d); if (ok(c)) return { v: c, fixed: true, from: raw }; }
+  return { v, check: true };
+}
+function finalizeLab(parsed) {
+  parsed.flags = {};
+  for (const [k, v] of Object.entries(parsed.values)) {
+    const m = (parsed.meta || {})[k] || {};
+    const r = fixDecimal(k, v, m.raw, m.ref);
+    parsed.values[k] = r.v;
+    if (r.fixed) parsed.flags[k] = { type: 'fixed', from: r.from };
+    else if (r.check) parsed.flags[k] = { type: 'check' };
+  }
+  return parsed;
+}
 
 // 報告日期：優先採檢／採血日期，其次檢驗、報告、收件日期，最後才用其他日期（不用列印、申請、生日）
 function findReportDate(text) {
@@ -1324,7 +1388,7 @@ function findReportDate(text) {
 
 // 純文字解析（貼上的文字、或 OCR 沒有位置資訊時）
 function parseLabText(text) {
-  const values = {};
+  const values = {}, meta = {};
   const lines = normalizeOcr(text).split(/\r?\n/).map(x => x.trim()).filter(Boolean);
   const itemLines = [];           // 有項目名稱、但同一行沒有數值
   const hasItem = line => LAB_ITEMS.some(it => matchItem(it, line));
@@ -1333,8 +1397,8 @@ function parseLabText(text) {
       if (values[it.k] !== undefined) continue;
       const m = matchItem(it, line);
       if (!m) continue;
-      const v = firstNumberAfter(line.slice(m.index + m[0].length));
-      if (v !== null) values[it.k] = v;
+      const r = firstNumberAfter(line.slice(m.index + m[0].length));
+      if (r) { values[it.k] = r.v; meta[it.k] = { raw: r.raw, ref: r.ref }; }
       else itemLines.push({ i, k: it.k });
     }
   });
@@ -1345,7 +1409,7 @@ function parseLabText(text) {
     const used = new Set();
     // 欄位式（先列全部名稱、再列全部數值）：數量相同就依序配對
     if (itemLines.length >= 2 && pureValues.length === itemLines.length && pureValues[0].i > itemLines[itemLines.length - 1].i) {
-      itemLines.forEach((x, j) => { if (values[x.k] === undefined) values[x.k] = valueToken(pureValues[j].l); });
+      itemLines.forEach((x, j) => { if (values[x.k] === undefined) { values[x.k] = valueToken(pureValues[j].l); meta[x.k] = { raw: valueRaw(pureValues[j].l) }; } });
     } else {
       // 數值在名稱的下一行或上一行（照片歪斜時常見）：先判斷整張是哪一種
       const isVal = new Set(valueLines.map(v => v.i));
@@ -1355,12 +1419,15 @@ function parseLabText(text) {
         for (const x of itemLines) {
           if (values[x.k] !== undefined) continue;
           const j = x.i + d;
-          if (isVal.has(j) && !used.has(j)) { values[x.k] = valueToken(lines[j].split(/\s+/)[0]); used.add(j); }
+          if (isVal.has(j) && !used.has(j)) {
+            const tok = lines[j].split(/\s+/)[0];
+            values[x.k] = valueToken(tok); meta[x.k] = { raw: valueRaw(tok), ref: refRange(lines[j].slice(tok.length)) }; used.add(j);
+          }
         }
       }
     }
   }
-  return { values, date: findReportDate(text) };
+  return { values, meta, date: findReportDate(text) };
 }
 
 // 依照片位置配對：名稱右邊、高度最接近的數值（自動修正照片歪斜）
@@ -1374,7 +1441,7 @@ function parseLabGeo(lines) {
       spans.push({ a: S.length, b: S.length + t.length, w });
       S += t;
       const v = valueToken(w.text);
-      if (v !== null) nums.push({ v, x0: w.x0, cy: (w.y0 + w.y1) / 2, h: w.y1 - w.y0 });
+      if (v !== null) nums.push({ v, raw: valueRaw(w.text), x0: w.x0, x1: w.x1, cy: (w.y0 + w.y1) / 2, h: w.y1 - w.y0, box: { x0: w.x0, y0: w.y0, x1: w.x1, y1: w.y1 } });
     });
     for (const it of LAB_ITEMS) {
       const m = matchItem(it, S);
@@ -1388,7 +1455,8 @@ function parseLabGeo(lines) {
       names.push({ k: it.k, x1: w.x1, cy: (sp.w.y0 + sp.w.y1) / 2, h: Math.max(8, sp.w.y1 - sp.w.y0) });
     }
   }
-  if (!names.length || !nums.length) return {};
+  if (!names.length || !nums.length) return { values: {}, meta: {} };
+  const allWords = lines.flatMap(l => l.words);
   const right = (n, c) => c.x0 > n.x1 + n.h * 0.3;
   // 第一輪：估計歪斜造成的上下位移與「檢驗結果」欄的位置
   const dys = [], xs = [];
@@ -1414,14 +1482,19 @@ function parseLabGeo(lines) {
     pairs.push({ ni, ci, cost: dy / n.h + dx / (6 * n.h) });
   }));
   pairs.sort((a, b) => a.cost - b.cost);
-  const usedN = new Set(), usedC = new Set(), values = {};
+  const usedN = new Set(), usedC = new Set(), values = {}, meta = {};
   for (const p of pairs) {
     if (usedN.has(p.ni) || usedC.has(p.ci)) continue;
     const k = names[p.ni].k;
     if (values[k] !== undefined) { usedN.add(p.ni); continue; }
-    values[k] = nums[p.ci].v; usedN.add(p.ni); usedC.add(p.ci);
+    const c = nums[p.ci];
+    // 同一列右邊的文字裡找參考值範圍
+    const rowText = allWords.filter(w => w.x0 > c.x1 && Math.abs((w.y0 + w.y1) / 2 - c.cy) < 0.9 * c.h)
+      .sort((a, b) => a.x0 - b.x0).map(w => w.text).join(' ');
+    values[k] = c.v; meta[k] = { raw: c.raw, ref: refRange(rowText), box: c.box };
+    usedN.add(p.ni); usedC.add(p.ci);
   }
-  return values;
+  return { values, meta };
 }
 
 function parseLab(res) {
@@ -1429,7 +1502,7 @@ function parseLab(res) {
   const t = parseLabText(text);
   if (res && res.lines && res.lines.length) {
     const g = parseLabGeo(res.lines);
-    return { values: { ...t.values, ...g }, date: t.date };   // 有位置資訊時以位置配對為準
+    return { values: { ...t.values, ...g.values }, meta: { ...t.meta, ...g.meta }, date: t.date };   // 有位置資訊時以位置配對為準
   }
   return t;
 }
@@ -1446,7 +1519,7 @@ async function prepForOcr(blob) {
   const url = URL.createObjectURL(blob);
   try {
     const img = new Image(); img.src = url; await img.decode();
-    const s = Math.min(2.0, 2400 / Math.max(img.naturalWidth, img.naturalHeight));
+    const s = Math.min(2.0, 3200 / Math.max(img.naturalWidth, img.naturalHeight));
     const c = document.createElement('canvas');
     c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
     const g = c.getContext('2d'); g.drawImage(img, 0, 0, c.width, c.height);
@@ -1494,7 +1567,69 @@ async function ocrImage(blob, onProgress) {
   }
   const img = await prepForOcr(blob);
   const { data } = await ocrWorker.recognize(img, {}, { text: true, tsv: true });
-  return { text: data.text || '', lines: linesFromOcr(data) };
+  return { text: data.text || '', lines: linesFromOcr(data), img };
+}
+
+// 把每個數值那一小塊放大、黑白化，用「只認數字與小數點」的模式再辨識一次
+let digitWorker = null;
+async function loadBitmap(blob) {
+  if (window.createImageBitmap) { try { return await createImageBitmap(blob); } catch (e) {} }
+  const url = URL.createObjectURL(blob);
+  const img = new Image(); img.src = url; await img.decode();
+  return img;
+}
+function cropDigits(src, b) {
+  const h = b.y1 - b.y0, pad = h * 0.45;
+  const sx = Math.max(0, b.x0 - pad), sy = Math.max(0, b.y0 - pad);
+  const sw = Math.min((src.width || src.naturalWidth) - sx, b.x1 - b.x0 + pad * 2), sh = Math.min((src.height || src.naturalHeight) - sy, h + pad * 2);
+  const scale = Math.max(1, Math.min(4, 96 / h)), M = 24;
+  const c = document.createElement('canvas');
+  c.width = Math.round(sw * scale) + M * 2; c.height = Math.round(sh * scale) + M * 2;
+  const g = c.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+  g.imageSmoothingQuality = 'high';
+  g.drawImage(src, sx, sy, sw, sh, M, M, Math.round(sw * scale), Math.round(sh * scale));
+  // Otsu 自動門檻黑白化
+  const d = g.getImageData(0, 0, c.width, c.height), p = d.data, hist = new Array(256).fill(0);
+  for (let i = 0; i < p.length; i += 4) hist[p[i]]++;
+  const total = p.length / 4; let sum = 0; for (let i = 0; i < 256; i++) sum += i * hist[i];
+  let sB = 0, wB = 0, best = 0, th = 128;
+  for (let i = 0; i < 256; i++) {
+    wB += hist[i]; if (!wB) continue; const wF = total - wB; if (!wF) break;
+    sB += i * hist[i]; const mB = sB / wB, mF = (sum - sB) / wF, v = wB * wF * (mB - mF) ** 2;
+    if (v > best) { best = v; th = i; }
+  }
+  for (let i = 0; i < p.length; i += 4) { const v = p[i] > th ? 255 : 0; p[i] = p[i + 1] = p[i + 2] = v; }
+  g.putImageData(d, 0, 0);
+  return new Promise(res => c.toBlob(res, 'image/png'));
+}
+async function refineDigits(res, parsed, onProgress) {
+  const ks = Object.keys(parsed.meta || {}).filter(k => parsed.meta[k].box);
+  if (!ks.length || !res.img) return;
+  if (!digitWorker) {
+    digitWorker = await Tesseract.createWorker('eng', 1);
+    await digitWorker.setParameters({ tessedit_char_whitelist: '0123456789.', tessedit_pageseg_mode: '7' });
+  }
+  const src = await loadBitmap(res.img);
+  const digits = x => String(x || '').replace(/[^\d]/g, '');
+  for (let i = 0; i < ks.length; i++) {
+    const k = ks[i], m = parsed.meta[k];
+    if (onProgress) onProgress('確認數字與小數點', i / ks.length);
+    try {
+      const blob = await cropDigits(src, m.box);
+      const { data } = await digitWorker.recognize(blob);
+      const t = String(data.text || '').replace(/\s+/g, '').replace(/^\.+|\.+$/g, '');
+      if (!/^\d+(\.\d+)?$/.test(t)) continue;
+      const nv = Number(t);
+      const sameDigits = digits(t) === digits(m.raw);
+      const lim = LAB_LIMITS[k], ok = x => !lim || (x >= lim[0] && x <= lim[1]);
+      // 數字相同但多讀到小數點 → 採用；數字不同時，只有原本不合理、新的合理才採用
+      if ((sameDigits && t.includes('.')) || (!sameDigits && !ok(parsed.values[k]) && ok(nv))) {
+        parsed.values[k] = nv; m.raw = t; m.refined = true;
+      }
+    } catch (e) {}
+  }
+  if (onProgress) onProgress('確認數字與小數點', 1);
 }
 
 const ym = s => s.slice(0, 7);
@@ -1648,10 +1783,10 @@ function openLab(lab) {
   const inputs = () => [...$('#sheetBody').querySelectorAll('.lab-item input')];
   const markFilled = () => {
     let n = 0;
-    inputs().forEach(i => { const f = i.value.trim() !== ''; i.classList.toggle('filled', f); if (f) n++; });
+    inputs().forEach(i => { const f = i.value.trim() !== ''; i.classList.toggle('filled', f); if (!f) i.classList.remove('check'); if (f) n++; });
     $('#lab-count').innerHTML = `目前已填 <b>${n}</b> / ${LAB_ITEMS.length} 項${photos.length ? `・報告照片 ${photos.length} 張` : ''}`;
   };
-  inputs().forEach(i => i.addEventListener('input', markFilled));
+  inputs().forEach(i => i.addEventListener('input', () => { i.classList.remove('check'); markFilled(); }));
 
   const drawLog = () => {
     const st = $('#lab-ocr-status'); if (!st) return;
@@ -1665,20 +1800,31 @@ function openLab(lab) {
     }));
   };
   // 解析一張報告的文字：只填空白欄；與已填數值不同時列出讓病友選
-  const applyParsed = (res, label) => {
+  const applyParsed = (res, label, parsedIn) => {
     const text = typeof res === 'string' ? res : res.text || '';
-    const { values, date } = parseLab(res);
-    let n = 0; const conflicts = [];
+    const parsed = parsedIn || finalizeLab(parseLab(res));
+    const { values, date } = parsed;
+    let n = 0; const conflicts = [], notes = [];
     for (const [k, v] of Object.entries(values)) {
       const inp = $(`#sheetBody .lab-item input[data-k="${k}"]`);
       if (!inp) continue;
       const cur = num(inp.value);
-      if (cur === null) { inp.value = fmt(v, 2); n++; }
+      if (cur === null) {
+        inp.value = fmt(v, 2); n++;
+        const f = parsed.flags && parsed.flags[k];
+        if (f) { inp.classList.add('check'); notes.push({ k, f, v }); }
+      }
       else if (Math.abs(cur - v) > 1e-9) conflicts.push({ k, v, cur });
     }
     if (date && !lab && date <= today() && !log.some(x => x.date)) $('#lab-date').value = date;
     rawPages.push({ label, text });
     let html = `${n ? '✅' : '⚪'} <b>${label}</b>：填入 ${n} 項${date ? `（報告日期 ${date}）` : ''}${!n && !conflicts.length ? '，沒有找到可對應的項目' : ''}`;
+    for (const x of notes) {
+      const it = LAB_ITEMS.find(i => i.k === x.k);
+      html += x.f.type === 'fixed'
+        ? `<br>🔸 ${it.n}：讀到「${esc(x.f.from)}」，依合理範圍判斷應為 <b>${fmt(x.v, 3)}</b>（已補小數點），請對照報告確認`
+        : `<br>🔸 ${it.n}：${fmt(x.v, 3)} 超出一般範圍，可能辨識錯誤，請對照報告確認`;
+    }
     for (const c of conflicts) {
       const it = LAB_ITEMS.find(x => x.k === c.k);
       html += `<br>⚠️ ${it.n}：這張是 <b>${fmt(c.v, 2)}</b>，已填 ${fmt(c.cur, 2)} <button class="btn sm" data-fix="${c.k}" data-v="${fmt(c.v, 2)}" style="min-height:30px;padding:2px 10px">改用 ${fmt(c.v, 2)}</button>`;
@@ -1710,7 +1856,7 @@ function openLab(lab) {
         toast(files.length > 1 ? `處理 ${files.length} 張照片中…` : '照片處理中…');
         for (const f of files) {
           try {
-            photos.push({ id: uid(), isNew: true, blob: await resizeImage(f, 2400, 0.9), thumb: await blobToDataURL(await resizeImage(f, 240, 0.7)) });
+            photos.push({ id: uid(), isNew: true, blob: await resizeImage(f, 3200, 0.92), thumb: await blobToDataURL(await resizeImage(f, 240, 0.7)) });
           } catch (e) { toast('有照片無法讀取'); }
         }
         drawPhotos();
@@ -1750,8 +1896,15 @@ function openLab(lab) {
           st.innerHTML = `<div class="info small" style="margin-top:10px">${done}<div style="margin:4px 0">${label}：第 ${page} 張（${t + 1}/${targets.length}）… ${Math.round(pr * 100)}%</div>
             <div class="ocr-bar"><div style="width:${Math.round(pr * 100)}%"></div></div></div>`;
         });
+        const parsed = parseLab(res);
+        try {
+          await refineDigits(res, parsed, (label, pr) => {
+            st.innerHTML = `<div class="info small" style="margin-top:10px">${label}：第 ${page} 張（${t + 1}/${targets.length}）… ${Math.round(pr * 100)}%<div class="ocr-bar"><div style="width:${Math.round(pr * 100)}%"></div></div></div>`;
+          });
+        } catch (e) {}
+        finalizeLab(parsed);
         ocrDone.add(p.id);
-        applyParsed(res, `第 ${page} 張照片`);
+        applyParsed(res, `第 ${page} 張照片`, parsed);
         drawPhotos();
       }
       try { localStorage.setItem('ocr-ready', '1'); } catch (e) {}
